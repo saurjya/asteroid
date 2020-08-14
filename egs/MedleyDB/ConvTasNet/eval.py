@@ -1,44 +1,58 @@
 import os
-import json
-import yaml
-import argparse
 import random
-import torch
-from tqdm import tqdm
-import pandas as pd
 import soundfile as sf
+import torch
+import yaml
+import json
+import argparse
+import numpy as np
+import pandas as pd
+from tqdm import tqdm
 from pprint import pprint
 
-from asteroid.utils import tensors_to_device
-from asteroid.losses import PITLossWrapper, pairwise_neg_sisdr
 from asteroid.metrics import get_metrics
-
-from model import load_best_model
-from asteroid.data import Wsj0mixDataset
+from asteroid.losses import PITLossWrapper, pairwise_neg_sisdr
+from asteroid.data.wham_dataset import WhamDataset
+from asteroid.models import ConvTasNet
+from asteroid.utils import tensors_to_device
+from asteroid.models import save_publishable
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    "--test_dir", type=str, required=True, help="Local data directory with test files"
+    "--task",
+    type=str,
+    required=True,
+    help="One of `enh_single`, `enh_both`, " "`sep_clean` or `sep_noisy`",
 )
-parser.add_argument("--n_src", type=int, default=2)
+parser.add_argument(
+    "--test_dir", type=str, required=True, help="Test directory including the json files"
+)
 parser.add_argument(
     "--use_gpu", type=int, default=0, help="Whether to use the GPU for model execution"
 )
 parser.add_argument("--exp_dir", default="exp/tmp", help="Experiment root")
 parser.add_argument(
-    "--n_save_ex", type=int, default=-1, help="Number of audio examples to save, -1 means all"
+    "--n_save_ex", type=int, default=50, help="Number of audio examples to save, -1 means all"
 )
+
 compute_metrics = ["si_sdr", "sdr", "sir", "sar", "stoi"]
 
 
 def main(conf):
-    model = load_best_model(conf["train_conf"], conf["exp_dir"])
+    model_path = os.path.join(conf["exp_dir"], "best_model.pth")
+    model = ConvTasNet.from_pretrained(model_path)
     # Handle device placement
     if conf["use_gpu"]:
         model.cuda()
     model_device = next(model.parameters()).device
-    test_set = Wsj0mixDataset(conf["test_dir"], n_src=conf["n_src"], segment=None)
+    test_set = WhamDataset(
+        conf["test_dir"],
+        conf["task"],
+        sample_rate=conf["sample_rate"],
+        nondefault_nsrc=model.masker.n_src,
+        segment=None,
+    )  # Uses all segment length
     # Used to reorder sources only
     loss_func = PITLossWrapper(pairwise_neg_sisdr, pit_from="pw_mtx")
 
@@ -52,13 +66,7 @@ def main(conf):
     for idx in tqdm(range(len(test_set))):
         # Forward the network on the mixture.
         mix, sources = tensors_to_device(test_set[idx], device=model_device)
-        if conf["train_conf"]["training"]["loss_alpha"] == 1:
-            # If Deep clustering only, use DC masks.
-            est_sources, dic_out = model.dc_head_separate(mix[None, None])
-        else:
-            # If Chimera, use mask-inference head masks
-            est_sources, dic_out = model.separate(mix[None, None])
-
+        est_sources = model(mix[None, None])
         loss, reordered_sources = loss_func(est_sources, sources[None], return_est=True)
         mix_np = mix[None].cpu().data.numpy()
         sources_np = sources.cpu().data.numpy()
@@ -82,6 +90,7 @@ def main(conf):
             for src_idx, src in enumerate(sources_np):
                 sf.write(local_save_dir + "s{}.wav".format(src_idx + 1), src, conf["sample_rate"])
             for src_idx, est_src in enumerate(est_sources_np):
+                est_src *= np.max(np.abs(mix_np)) / np.max(np.abs(est_src))
                 sf.write(
                     local_save_dir + "s{}_estimate.wav".format(src_idx + 1),
                     est_src,
@@ -107,15 +116,31 @@ def main(conf):
     with open(os.path.join(conf["exp_dir"], "final_metrics.json"), "w") as f:
         json.dump(final_results, f, indent=0)
 
+    model_dict = torch.load(model_path, map_location="cpu")
+    os.makedirs(os.path.join(conf["exp_dir"], "publish_dir"), exist_ok=True)
+    publishable = save_publishable(
+        os.path.join(conf["exp_dir"], "publish_dir"),
+        model_dict,
+        metrics=final_results,
+        train_conf=train_conf,
+    )
+
 
 if __name__ == "__main__":
     args = parser.parse_args()
     arg_dic = dict(vars(args))
+
     # Load training config
     conf_path = os.path.join(args.exp_dir, "conf.yml")
     with open(conf_path) as f:
         train_conf = yaml.safe_load(f)
-
     arg_dic["sample_rate"] = train_conf["data"]["sample_rate"]
     arg_dic["train_conf"] = train_conf
+
+    if args.task != arg_dic["train_conf"]["data"]["task"]:
+        print(
+            "Warning : the task used to test is different than "
+            "the one from training, be sure this is what you want."
+        )
+
     main(arg_dic)
