@@ -1,18 +1,15 @@
-### About the wsj0-2mix dataset
+### About the MedleyDB dataset
 
-wsj0-2mix is a single channel speech separation dataset base on WSJ0.
-Three speaker extension (wsj0-3mix) is also considered here.
+MedleyDB is a dataset of annotated, royalty-free multitrack recordings. MedleyDB was curated primarily to support research on melody extraction, addressing important shortcomings of existing collections. For each song we provide melody f0 annotations as well as instrument activations for evaluating automatic instrument recognition. The dataset is also useful for research on tasks that require access to the individual tracks of a song such as source separation and automatic mixing.
 
 ### References
 ```BibTex
-@article{Hershey_2016,
-   title={Deep clustering: Discriminative embeddings for segmentation and separation},
-   ISBN={9781479999880},
-   url={http://dx.doi.org/10.1109/ICASSP.2016.7471631},
-   DOI={10.1109/icassp.2016.7471631},
-   journal={2016 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP)},
-   publisher={IEEE},
-   author={Hershey, John R. and Chen, Zhuo and Le Roux, Jonathan and Watanabe, Shinji},
-   year={2016},
+@inproceedings{bittner2014medleydb,
+  title={Medleydb: A multitrack dataset for annotation-intensive mir research.},
+  author={Bittner, Rachel M and Salamon, Justin and Tierney, Mike and Mauch, Matthias and Cannam, Chris and Bello, Juan Pablo},
+  booktitle={ISMIR},
+  volume={14},
+  pages={155--160},
+  year={2014}
 }
 ```
