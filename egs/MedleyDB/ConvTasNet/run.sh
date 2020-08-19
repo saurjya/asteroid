@@ -1,16 +1,28 @@
 #!/bin/bash
 set -e  # Exit on error
 
-# Main storage directory. You'll need disk space to dump the WHAM mixtures and the wsj0 wav
-# files if you start from sphere files.
-storage_dir=
-# If you start from the sphere files, specify the path to the directory and start from stage 0
-sphere_dir=  # Directory containing sphere files
-# If you already have wsj0 wav files (converted from sphere format).
-wsj0_wav_dir=
-# If you already have the wsj0-2mix and wsj0-3mix mixtures, specify the path to the common directory
-# and start from stage 2.
-wsj0mix_wav_dir=
+#if starting from stage 0
+# Destination to save json files with list of track locations for instrument sets
+#json_dir=
+
+# Location for tracklist for all data dirs
+tracklist=  # Directory containing tracklists for V1, V2, Bach10 and others
+
+# Location for MedleyDB V1
+V1_dir=  # Directory containing MedleyDB V1 audio files
+
+# Location for MedleyDB V2
+V2_dir=  # Directory containing MedleyDB V2 audio files
+
+# Location for Bach10
+Bach10_dir=  # Directory containing MedleyDB format Bach10 audio files
+
+# Location for additional MedleyDB format multitracks
+extra_dir=  # Directory containing additional MedleyDB format audio files
+
+# Location for MedleyDB format metadata files for all multitracks
+metadata_dir=  # Directory containing MedleyDB github repository with metadata for all files
+
 
 # After running the recipe a first time, you can run it from stage 3 directly to train new models.
 
@@ -29,9 +41,9 @@ id=$CUDA_VISIBLE_DEVICES
 
 # Data
 #data_dir=data  # Local data directory (No disk space needed)
-sample_rate=8000
-mode=min
-n_src=2  # 2 or 3
+sample_rate=44100
+n_src=1  # 2 or 3
+n_poly=2
 
 # Training
 batch_size=32
@@ -49,24 +61,23 @@ eval_use_gpu=1
 . utils/parse_options.sh
 
 sr_string=$(($sample_rate/1000))
-suffix=${n_src}speakers/wav${sr_string}k/$mode
+suffix=${n_src}inst${n_poly}poly/wav${sr_string}k
 dumpdir=data/$suffix  # directory to put generated json file
 
-train_dir=$dumpdir/tr
-valid_dir=$dumpdir/cv
-test_dir=$dumpdir/tt
+json_dir=$dumpdir
+is_raw=True
 
 if [[ $stage -le  0 ]]; then
   echo "Stage 0: Converting sphere files to wav files"
-  . local/convert_sphere2wav.sh --sphere_dir $sphere_dir --wav_dir $wsj0_wav_dir
+  $python_path local/preprocess_medleyDB.py --metadata_path $metadata_dir --json_dir $json_dir --v1_path $V1_dir --v2_path $V2_dir
 fi
 
 if [[ $stage -le  1 ]]; then
 	echo "Stage 1 : Downloading wsj0-mix mixing scripts"
 	# Link + WHAM is ok for 2 source.
-	wget https://www.merl.com/demos/deep-clustering/create-speaker-mixtures.zip -O ./local/
-	unzip ./local/create-speaker-mixtures.zip -d ./local/create-speaker-mixtures
-	mv ./local/create-speaker-mixtures.zip ./local/create-speaker-mixtures
+	#wget https://www.merl.com/demos/deep-clustering/create-speaker-mixtures.zip -O ./local/
+	#unzip ./local/create-speaker-mixtures.zip -d ./local/create-speaker-mixtures
+	#mv ./local/create-speaker-mixtures.zip ./local/create-speaker-mixtures
 
 	echo "You need to generate the wsj0-mix dataset using the official MATLAB
 			  scripts (already downloaded into ./local/create-speaker-mixtures).
@@ -76,25 +87,25 @@ if [[ $stage -le  1 ]]; then
 				wsj0-2mix and the mixing scripts are in Python.
 				Specify wsj0mix_wav_dir and start from stage 2 when the mixtures have been generated.
 				Exiting now."
-	exit 1
+	#exit 1
 fi
 
 if [[ $stage -le  2 ]]; then
 	# Make json directories with min/max modes and sampling rates
 	echo "Stage 2: Generating json files including wav path and duration"
-	for sr_string in 8 16; do
-		for mode_option in min max; do
-			for tmp_nsrc in 2 3; do
-				tmp_dumpdir=data/${tmp_nsrc}speakers/wav${sr_string}k/$mode_option
-				echo "Generating json files in $tmp_dumpdir"
-				[[ ! -d $tmp_dumpdir ]] && mkdir -p $tmp_dumpdir
-				local_wsj_dir=$wsj0mix_wav_dir/${tmp_nsrc}speakers/wav${sr_string}k/$mode_option/
-				$python_path local/preprocess_wsj0mix.py --in_dir $local_wsj_dir \
-				 																			--n_src $tmp_nsrc \
-				 																			--out_dir $tmp_dumpdir
-			done
-    done
-  done
+	#for sr_string in 8 16; do
+	#	for mode_option in min max; do
+	#		for tmp_nsrc in 2 3; do
+	#			tmp_dumpdir=data/${tmp_nsrc}speakers/wav${sr_string}k/$mode_option
+	#			echo "Generating json files in $tmp_dumpdir"
+	#			[[ ! -d $tmp_dumpdir ]] && mkdir -p $tmp_dumpdir
+	#			local_wsj_dir=$wsj0mix_wav_dir/${tmp_nsrc}speakers/wav${sr_string}k/$mode_option/
+	#			$python_path local/preprocess_wsj0mix.py --in_dir $local_wsj_dir \
+	#			 																			--n_src $tmp_nsrc \
+	#			 																			--out_dir $tmp_dumpdir
+	#		done
+    #done
+  #done
 fi
 
 # Generate a random ID for the run if no tag is specified
@@ -102,7 +113,7 @@ uuid=$($python_path -c 'import uuid, sys; print(str(uuid.uuid4())[:8])')
 if [[ -z ${tag} ]]; then
 	tag=${n_src}sep_${sr_string}k${mode}_${uuid}
 fi
-expdir=exp/train_chimera_${tag}
+expdir=exp/train_convtasnet_${tag}
 mkdir -p $expdir && echo $uuid >> $expdir/run_uuid.txt
 echo "Results from the following experiment will be stored in $expdir"
 
@@ -110,7 +121,7 @@ if [[ $stage -le 3 ]]; then
   echo "Stage 3: Training"
   mkdir -p logs
   CUDA_VISIBLE_DEVICES=$id $python_path train.py \
-		--train_dir $train_dir \
+		--json_dir $json_dir \
 		--valid_dir $valid_dir \
 		--n_src $n_src \
 		--sample_rate $sample_rate \

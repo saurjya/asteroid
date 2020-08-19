@@ -1,33 +1,37 @@
 # Filterbank config
 filterbank:
-  n_filters: 256
-  kernel_size: 256
-  stride: 64
+  n_filters: 512
+  kernel_size: 16
+  stride: 8
 # Network config
 masknet:
-  rnn_type: lstm
-  n_layers: 4
-  hidden_size: 600
-  dropout: 0.3
-  embedding_dim: 40
-  take_log: y
+  n_blocks: 8
+  n_repeats: 3
+  mask_act: relu
+  bn_chan: 128
+  skip_chan: 128
+  hid_chan: 512
 # Training config
 training:
   epochs: 200
-  batch_size: 32
-  num_workers: 8
+  batch_size: 8
+  num_workers: 4
   half_lr: yes
   early_stop: yes
-  loss_alpha: 1.0  # DC loss weight : 1.0 => DC, <1.0 => Chimera
+  random_seed: 42
 # Optim config
 optim:
-  optimizer: rmsprop
-  lr: 0.0001
-  weight_decay: 0.00000
-#  momentum: 0.9
+  optimizer: adam
+  lr: 0.001
+  weight_decay: 0.
 # Data config
 data:
-  train_dir: data/wav8k/min/tr/
-  valid_dir: data/wav8k/min/cv/
-  n_src: 2
+  json_dir: data/wav8k/min/tr/
+  validation_split: data/wav8k/min/cv/
+  n_inst: 1
+  n_poly: 2
+  task: sep_clean
+  nondefault_nsrc:
   sample_rate: 8000
+  segment: 5.0
+  threshold: 0.1

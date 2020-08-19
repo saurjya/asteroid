@@ -22,7 +22,15 @@ def make_processed_filelist(track_list, out_dir, out_filename):
     return
 
 
-def preprocess_metadata(metadata_path, inst_list, is_stem=False):
+def preprocess_metadata(
+    metadata_path,
+    inst_list,
+    v1_path=None,
+    v2_path=None,
+    bach10_path=None,
+    extra_path=None,
+    is_stem=False,
+):
     """ Create .json file containing tracks containing given inst_list"""
     # meta_infos = []
     counter = 0
@@ -31,8 +39,10 @@ def preprocess_metadata(metadata_path, inst_list, is_stem=False):
     tracklist_path = {
         "v1": os.path.join(resource_path, "tracklist_V1.txt"),
         "v2": os.path.join(resource_path, "tracklist_V2.txt"),
+        "bach10": os.path.join(resource_path, "tracklist_bach10.txt"),
+        "extra": os.path.join(resource_path, "tracklist_extra.txt"),
     }
-    data_path = {"v1": "/Volumes/Samsung_T5/MedleyDB/Audio", "v2": "/Volumes/Samsung_T5/V2"}
+    data_path = {"v1": v1_path, "v2": v2_path, "bach10": bach10_path, "extra": extra_path}
     inst_tracks = []
     for ver, path in tracklist_path.items():
         print(path)
@@ -276,13 +286,35 @@ if __name__ == "__main__":
     parser.add_argument(
         "--if_stem", type=bool, default=False, help="If instrument tracks are stem or raw"
     )
+    parser.add_argument(
+        "--json_dir", type=str, default=None, help="Directory path for output json files"
+    )
+    parser.add_argument(
+        "--v1_path", type=str, default=None, help="Directory path for output v1 files"
+    )
+    parser.add_argument(
+        "--v2_path", type=str, default=None, help="Directory path for output v2 files"
+    )
+    parser.add_argument(
+        "--bach10_path", type=str, default=None, help="Directory path for output bach10 files"
+    )
+    parser.add_argument(
+        "--others_path", type=str, default=None, help="Directory path for output others files"
+    )
+
     args = parser.parse_args()
     print(args)
-    tracklist = preprocess_metadata(args.metadata_path, args.inst_list, args.if_stem)
+    tracklist = preprocess_metadata(
+        args.metadata_path,
+        args.inst_list,
+        args.v1_path,
+        args.v2_path,
+        args.bach10_path,
+        args.extra_path,
+        args.if_stem,
+    )
     make_processed_filelist(
-        tracklist,
-        "/Users/dinosaurjya/Projects/asteroid_local/egs/MedleyDB/DeepClustering/local",
-        "test",
+        tracklist, args.json_dir, "inst1",
     )
     # print(A[:,1])
     # plt.plot(A[:,0],A[:,1])
