@@ -39,8 +39,8 @@ def preprocess_metadata(
     tracklist_path = {
         "v1": os.path.join(resource_path, "tracklist_V1.txt"),
         "v2": os.path.join(resource_path, "tracklist_V2.txt"),
-        "bach10": os.path.join(resource_path, "tracklist_bach10.txt"),
-        "extra": os.path.join(resource_path, "tracklist_extra.txt"),
+        # "bach10": os.path.join(resource_path, "tracklist_bach10.txt"),
+        # "extra": os.path.join(resource_path, "tracklist_extra.txt"),
     }
     data_path = {"v1": v1_path, "v2": v2_path, "bach10": bach10_path, "extra": extra_path}
     inst_tracks = []

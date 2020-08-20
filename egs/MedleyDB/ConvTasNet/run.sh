@@ -9,19 +9,19 @@ set -e  # Exit on error
 tracklist=  # Directory containing tracklists for V1, V2, Bach10 and others
 
 # Location for MedleyDB V1
-V1_dir=  # Directory containing MedleyDB V1 audio files
+V1_dir=/import/c4dm-multitrack-private/C4DM%20Multitrack%20Collection/MedleyDB/Audio # Directory containing MedleyDB V1 audio files
 
 # Location for MedleyDB V2
-V2_dir=  # Directory containing MedleyDB V2 audio files
+V2_dir=/import/c4dm-multitrack-private/C4DM%20Multitrack%20Collection/MedleyDB/V2 # Directory containing MedleyDB V2 audio files
 
 # Location for Bach10
 Bach10_dir=  # Directory containing MedleyDB format Bach10 audio files
 
 # Location for additional MedleyDB format multitracks
-extra_dir=  # Directory containing additional MedleyDB format audio files
+extra_dir=# Directory containing additional MedleyDB format audio files
 
 # Location for MedleyDB format metadata files for all multitracks
-metadata_dir=  # Directory containing MedleyDB github repository with metadata for all files
+metadata_dir=/homes/ss404/projects/medleydb # Directory containing MedleyDB github repository with metadata for all files
 
 
 # After running the recipe a first time, you can run it from stage 3 directly to train new models.
@@ -34,7 +34,7 @@ python_path=python
 # ./run.sh --stage 3 --tag my_tag --loss_alpha 0.1 --id 0,1
 
 # General
-stage=3  # Controls from which stage to start
+stage=0  # Controls from which stage to start
 tag=""  # Controls the directory name associated to the experiment
 # You can ask for several GPUs using id (passed to CUDA_VISIBLE_DEVICES)
 id=$CUDA_VISIBLE_DEVICES
@@ -139,10 +139,10 @@ fi
 
 if [[ $stage -le 4 ]]; then
 	echo "Stage 4 : Evaluation"
-	CUDA_VISIBLE_DEVICES=$id $python_path eval.py \
-	  --n_src $n_src \
-		--test_dir $test_dir \
-		--use_gpu $eval_use_gpu \
-		--exp_dir ${expdir} | tee logs/eval_${tag}.log
-	cp logs/eval_${tag}.log $expdir/eval.log
+	#CUDA_VISIBLE_DEVICES=$id $python_path eval.py \
+	#  --n_src $n_src \
+	#	--test_dir $test_dir \
+	#	--use_gpu $eval_use_gpu \
+	#	--exp_dir ${expdir} | tee logs/eval_${tag}.log
+	#cp logs/eval_${tag}.log $expdir/eval.log
 fi
