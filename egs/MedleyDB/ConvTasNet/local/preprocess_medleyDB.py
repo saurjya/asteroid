@@ -37,8 +37,8 @@ def preprocess_metadata(
     meta_dir = metadata_path + "/medleydb/data/Metadata"
     resource_path = metadata_path + "/medleydb/resources"
     tracklist_path = {
-        "v1": os.path.join(resource_path, "tracklist_V1.txt"),
-        "v2": os.path.join(resource_path, "tracklist_V2.txt"),
+        #"v1": os.path.join(resource_path, "tracklist_v1.txt"),
+        "v2": os.path.join(resource_path, "tracklist_v2.txt"),
         # "bach10": os.path.join(resource_path, "tracklist_bach10.txt"),
         # "extra": os.path.join(resource_path, "tracklist_extra.txt"),
     }
@@ -299,7 +299,7 @@ if __name__ == "__main__":
         "--bach10_path", type=str, default=None, help="Directory path for output bach10 files"
     )
     parser.add_argument(
-        "--others_path", type=str, default=None, help="Directory path for output others files"
+        "--extra_path", type=str, default=None, help="Directory path for output others files"
     )
 
     args = parser.parse_args()

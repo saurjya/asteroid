@@ -3,22 +3,22 @@ set -e  # Exit on error
 
 #if starting from stage 0
 # Destination to save json files with list of track locations for instrument sets
-#json_dir=
+json_dir=/homes/ss404/projects/asteroid/egs/MedleyDB/ConvTasNet/data/1inst2poly/wav44k
 
 # Location for tracklist for all data dirs
 tracklist=  # Directory containing tracklists for V1, V2, Bach10 and others
 
 # Location for MedleyDB V1
-V1_dir=/import/c4dm-multitrack-private/C4DM%20Multitrack%20Collection/MedleyDB/Audio # Directory containing MedleyDB V1 audio files
+V1_dir="/import/c4dm-multitrack-private/C4DM Multitrack Collection/MedleyDB/Audio" # Directory containing MedleyDB V1 audio files
 
 # Location for MedleyDB V2
-V2_dir=/import/c4dm-multitrack-private/C4DM%20Multitrack%20Collection/MedleyDB/V2 # Directory containing MedleyDB V2 audio files
+V2_dir="/import/research_c4dm/ss404/V2" # Directory containing MedleyDB V2 audio files
 
 # Location for Bach10
 Bach10_dir=  # Directory containing MedleyDB format Bach10 audio files
 
 # Location for additional MedleyDB format multitracks
-extra_dir=# Directory containing additional MedleyDB format audio files
+extra_dir= # Directory containing additional MedleyDB format audio files
 
 # Location for MedleyDB format metadata files for all multitracks
 metadata_dir=/homes/ss404/projects/medleydb # Directory containing MedleyDB github repository with metadata for all files
@@ -34,7 +34,7 @@ python_path=python
 # ./run.sh --stage 3 --tag my_tag --loss_alpha 0.1 --id 0,1
 
 # General
-stage=0  # Controls from which stage to start
+stage=2  # Controls from which stage to start
 tag=""  # Controls the directory name associated to the experiment
 # You can ask for several GPUs using id (passed to CUDA_VISIBLE_DEVICES)
 id=$CUDA_VISIBLE_DEVICES
@@ -42,7 +42,7 @@ id=$CUDA_VISIBLE_DEVICES
 # Data
 #data_dir=data  # Local data directory (No disk space needed)
 sample_rate=44100
-n_src=1  # 2 or 3
+n_inst=1  # 2 or 3
 n_poly=2
 
 # Training
@@ -69,7 +69,7 @@ is_raw=True
 
 if [[ $stage -le  0 ]]; then
   echo "Stage 0: Converting sphere files to wav files"
-  $python_path local/preprocess_medleyDB.py --metadata_path $metadata_dir --json_dir $json_dir --v1_path $V1_dir --v2_path $V2_dir
+  $python_path local/preprocess_medleyDB.py --metadata_path $metadata_dir --json_dir $json_dir --v1_path "$V1_dir" --v2_path "$V2_dir"
 fi
 
 if [[ $stage -le  1 ]]; then
@@ -122,16 +122,13 @@ if [[ $stage -le 3 ]]; then
   mkdir -p logs
   CUDA_VISIBLE_DEVICES=$id $python_path train.py \
 		--json_dir $json_dir \
-		--valid_dir $valid_dir \
-		--n_src $n_src \
+		--n_inst $n_inst \
 		--sample_rate $sample_rate \
 		--optimizer $optimizer \
 		--lr $lr \
 		--weight_decay $weight_decay \
 		--epochs $epochs \
 		--batch_size $batch_size \
-		--loss_alpha $loss_alpha \
-		--take_log $take_log \
 		--num_workers $num_workers \
 		--exp_dir ${expdir}/ | tee logs/train_${tag}.log
 	cp logs/train_${tag}.log $expdir/train.log
