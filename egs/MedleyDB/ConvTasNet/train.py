@@ -35,7 +35,7 @@ def main(conf):
         conf["training"]["batch_size"],
         conf["training"]["num_workers"],
     )
-    conf["masknet"].update({"n_src": conf["data"]["n_src"] * conf["data"]["n_poly"]})
+    conf["masknet"].update({"n_src": conf["data"]["n_inst"] * conf["data"]["n_poly"]})
 
     # Define model and optimizer
     model = ConvTasNet(**conf["filterbank"], **conf["masknet"])
@@ -71,9 +71,9 @@ def main(conf):
     early_stopping = False
     if conf["training"]["early_stop"]:
         early_stopping = EarlyStopping(monitor="val_loss", patience=10, verbose=1)
-    gpus = -1
+    gpus = 1
     # Don't ask GPU if they are not available.
-    gpus = -1 if torch.cuda.is_available() else None
+    gpus = 1 if torch.cuda.is_available() else None
     trainer = pl.Trainer(
         max_epochs=conf["training"]["epochs"],
         checkpoint_callback=checkpoint,

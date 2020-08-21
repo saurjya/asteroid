@@ -27,7 +27,7 @@ optim:
 # Data config
 data:
   json_dir: data/wav8k/min/tr/
-  validation_split: data/wav8k/min/cv/
+  validation_split: 0.1
   n_inst: 1
   n_poly: 2
   task: sep_clean

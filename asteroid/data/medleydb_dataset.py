@@ -32,18 +32,17 @@ def make_dataloaders(
 
     validation_size = int(validation_split * len(total_set))
     train_size = len(total_set) - validation_size
-
+    torch.manual_seed(random_seed)
     train_set, val_set = data.random_split(
         total_set,
-        [train_size, validation_size],
-        generator=torch.Generator().manual_seed(random_seed),
+        [train_size, validation_size]
     )
 
     train_loader = data.DataLoader(
-        train_set, shuffle=True, batch_size=batch_size, num_workers=num_workers, drop_last=True
+        train_set, shuffle=False, batch_size=batch_size, num_workers=num_workers, drop_last=True
     )
     val_loader = data.DataLoader(
-        val_set, shuffle=True, batch_size=batch_size, num_workers=num_workers, drop_last=True
+        val_set, shuffle=False, batch_size=batch_size, num_workers=num_workers, drop_last=True
     )
     return train_loader, val_loader
 
@@ -78,19 +77,23 @@ class MedleydbDataset(data.Dataset):
         # orig_len = len(mix_infos)
         drop_utt, drop_len, orig_len = 0, 0, 0
         sources_infos = []
+        index_array = []
         if not self.like_test:
             for i in range(len(sources_conf)):
                 conf = sources_conf[i][1]
-                index_array = []
+                #print(sources_conf[i][0])
+                #index_array = []
                 duration = sources_conf[i][1][-1][0]
+                index_array.append(np.zeros(int(duration//5) + 1))
                 for timestamp, confidence in conf:
-                    j = int(timestamp) // segment
+                    j = int(timestamp // segment)
+                    #print(j)
                     index_array[i][j] = index_array[i][j] + confidence
                 orig_len = orig_len + duration
                 seg_dur = duration / len(index_array[i])
 
                 for k in range(len(index_array[i])):
-                    conf_thresh = threshold * float(len(sources_infos[i][0]))
+                    conf_thresh = threshold * float(len(sources_conf[i][0]))
                     if index_array[i][k] < conf_thresh:
                         drop_utt += 1
                         drop_len += seg_dur
@@ -104,6 +107,7 @@ class MedleydbDataset(data.Dataset):
             )
         )
         # self.mix = mix_infos
+        #print(sources_infos[0])
         self.sources = sources_infos
 
     def __len__(self):
@@ -116,27 +120,28 @@ class MedleydbDataset(data.Dataset):
         """
         # Load sources
         source_arrays = []
+       
         for src in self.sources:
             for i in range(self.n_poly):
+                idx = i
                 if i:
                     idx = random.choice(range(len(self.sources)))
 
                 start = self.sources[idx][1] * self.sample_rate
-
                 if self.like_test:
                     stop = None
                 else:
                     stop = start + self.seg_len
 
-                if src[idx] is None:
+                if self.sources[idx] is None:
                     # Target is filled with zeros if n_src > default_nsrc
                     s = np.zeros((self.seg_len,))
                 else:
-                    s, _ = sf.read(src[idx][0], start=start, stop=stop, dtype="float32")
+                    s, _ = sf.read(self.sources[idx][0], start=start, stop=stop, dtype="float32")
                 source_arrays.append(s)
-        sources = torch.from_numpy(np.vstack(source_arrays))
-        mix = torch.stack(sources).sum(0)
-        return mix, sources
+        source = torch.from_numpy(np.vstack(source_arrays))
+        mix = torch.stack(source).sum(0)
+        return mix, source
 
     def get_infos(self):
         """ Get dataset infos (for publishing models).
