@@ -5,7 +5,7 @@ import os
 import numpy as np
 import soundfile as sf
 import random
-
+import torchaudio
 
 def make_dataloaders(
     json_dir,
@@ -13,7 +13,7 @@ def make_dataloaders(
     random_seed=42,
     n_src=1,
     n_poly=2,
-    sample_rate=32000,
+    sample_rate=44100,
     segment=5.0,
     threshold=0.1,
     batch_size=2,
@@ -50,7 +50,7 @@ def make_dataloaders(
 class MedleydbDataset(data.Dataset):
     dataset_name = "MedleyDB"
 
-    def __init__(self, json_dir, n_src=1, n_poly=2, sample_rate=32000, segment=5.0, threshold=0.1):
+    def __init__(self, json_dir, n_src=1, n_poly=2, sample_rate=44100, segment=5.0, threshold=0.1):
         super().__init__()
         # Task setting
         self.json_dir = json_dir
@@ -78,13 +78,14 @@ class MedleydbDataset(data.Dataset):
         drop_utt, drop_len, orig_len = 0, 0, 0
         sources_infos = []
         index_array = []
+        
         if not self.like_test:
             for i in range(len(sources_conf)):
                 conf = sources_conf[i][1]
                 #print(sources_conf[i][0])
                 #index_array = []
                 duration = sources_conf[i][1][-1][0]
-                index_array.append(np.zeros(int(duration//5) + 1))
+                index_array.append(np.zeros(int(duration//segment) + 1))
                 for timestamp, confidence in conf:
                     j = int(timestamp // segment)
                     #print(j)
@@ -102,8 +103,8 @@ class MedleydbDataset(data.Dataset):
                         sources_infos.append((sources_conf[i][0], k))
 
         print(
-            "Drop {} utts({:.2f} h) from {} (less than {}  activity)".format(
-                drop_utt, drop_len / 3600, orig_len, self.threshold
+            "Drop {} utts ({:.2f} h) from ({:.2f} h) with less than {} percent activity".format(
+                drop_utt, drop_len / 3600, orig_len / 3600, threshold
             )
         )
         # self.mix = mix_infos
@@ -121,26 +122,25 @@ class MedleydbDataset(data.Dataset):
         # Load sources
         source_arrays = []
        
-        for src in self.sources:
-            for i in range(self.n_poly):
-                idx = i
-                if i:
-                    idx = random.choice(range(len(self.sources)))
+        for i in range(self.n_poly):
+            if i:
+                idx = random.choice(range(len(self.sources)))
 
-                start = self.sources[idx][1] * self.sample_rate
-                if self.like_test:
-                    stop = None
-                else:
-                    stop = start + self.seg_len
+            start = self.sources[idx][1] * self.sample_rate
+            if self.like_test:
+                stop = None
+            else:
+                stop = start + self.seg_len
 
-                if self.sources[idx] is None:
-                    # Target is filled with zeros if n_src > default_nsrc
-                    s = np.zeros((self.seg_len,))
-                else:
-                    s, _ = sf.read(self.sources[idx][0], start=start, stop=stop, dtype="float32")
-                source_arrays.append(s)
+            if self.sources[idx] is None:
+                # Target is filled with zeros if n_src > default_nsrc
+                s = np.zeros((self.seg_len,))
+            else:
+                s, sr = sf.read(self.sources[idx][0], start=start, stop=stop, dtype="float32")
+            source_arrays.append(s)
         source = torch.from_numpy(np.vstack(source_arrays))
-        mix = torch.stack(source).sum(0)
+        source = torchaudio.transforms.Resample(sr,32000)(source)
+        mix = torch.stack(list(source)).sum(0)
         return mix, source
 
     def get_infos(self):

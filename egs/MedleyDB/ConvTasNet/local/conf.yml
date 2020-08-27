@@ -14,8 +14,8 @@ masknet:
 # Training config
 training:
   epochs: 200
-  batch_size: 8
-  num_workers: 4
+  batch_size: 1
+  num_workers: 0
   half_lr: yes
   early_stop: yes
   random_seed: 42
@@ -26,12 +26,12 @@ optim:
   weight_decay: 0.
 # Data config
 data:
-  json_dir: data/wav8k/min/tr/
+  json_dir: data/inst2poly/wav44k
   validation_split: 0.1
   n_inst: 1
   n_poly: 2
   task: sep_clean
   nondefault_nsrc:
-  sample_rate: 8000
+  sample_rate: 44100
   segment: 5.0
   threshold: 0.1

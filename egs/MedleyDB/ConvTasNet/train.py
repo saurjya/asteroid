@@ -71,7 +71,7 @@ def main(conf):
     early_stopping = False
     if conf["training"]["early_stop"]:
         early_stopping = EarlyStopping(monitor="val_loss", patience=10, verbose=1)
-    gpus = 1
+    #gpus = 1
     # Don't ask GPU if they are not available.
     gpus = 1 if torch.cuda.is_available() else None
     trainer = pl.Trainer(

@@ -3,13 +3,12 @@ set -e  # Exit on error
 
 #if starting from stage 0
 # Destination to save json files with list of track locations for instrument sets
-#json_dir=/homes/ss404/projects/asteroid/egs/MedleyDB/ConvTasNet/data/1inst2poly/wav44k
-
+json_dir=/homes/ss404/projects/asteroid/egs/MedleyDB/ConvTasNet/data/1inst2poly44sr5.0sec
 # Location for tracklist for all data dirs
 tracklist=  # Directory containing tracklists for V1, V2, Bach10 and others
 
 # Location for MedleyDB V1
-V1_dir="/import/c4dm-multitrack-private/C4DM Multitrack Collection/MedleyDB/Audio" # Directory containing MedleyDB V1 audio files
+V1_dir="/import/research_c4dm/ss404/V1" # Directory containing MedleyDB V1 audio files
 
 # Location for MedleyDB V2
 V2_dir="/import/research_c4dm/ss404/V2" # Directory containing MedleyDB V2 audio files
@@ -43,11 +42,11 @@ id=$CUDA_VISIBLE_DEVICES
 #data_dir=data  # Local data directory (No disk space needed)
 sample_rate=44100
 n_inst=1  # 2 or 3
-n_poly=2
-
+n_poly=3
+segment=5.0
 # Training
-batch_size=32
-num_workers=8
+batch_size=1
+num_workers=10
 optimizer=rmsprop
 lr=0.0001
 weight_decay=0.0
@@ -61,10 +60,10 @@ eval_use_gpu=1
 . utils/parse_options.sh
 
 sr_string=$(($sample_rate/1000))
-suffix=${n_src}inst${n_poly}poly/wav${sr_string}k
+suffix=${n_inst}inst${n_poly}poly${sr_string}sr${segment}sec
 dumpdir=data/$suffix  # directory to put generated json file
 
-json_dir=/homes/ss404/projects/asteroid/egs/MedleyDB/ConvTasNet/data/inst2poly/wav44k
+#json_dir=$dumpdir
 is_raw=True
 
 if [[ $stage -le  0 ]]; then

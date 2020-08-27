@@ -37,7 +37,7 @@ def preprocess_metadata(
     meta_dir = metadata_path + "/medleydb/data/Metadata"
     resource_path = metadata_path + "/medleydb/resources"
     tracklist_path = {
-        #"v1": os.path.join(resource_path, "tracklist_v1.txt"),
+        "v1": os.path.join(resource_path, "tracklist_v1.txt"),
         "v2": os.path.join(resource_path, "tracklist_v2.txt"),
         # "bach10": os.path.join(resource_path, "tracklist_bach10.txt"),
         # "extra": os.path.join(resource_path, "tracklist_extra.txt"),
