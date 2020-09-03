@@ -67,44 +67,20 @@ dumpdir=data/$suffix  # directory to put generated json file
 is_raw=True
 
 if [[ $stage -le  0 ]]; then
-  echo "Stage 0: Converting sphere files to wav files"
-  $python_path local/preprocess_medleyDB.py --metadata_path $metadata_dir --json_dir $json_dir --v1_path "$V1_dir" --v2_path "$V2_dir"
-fi
+  echo "Stage 0 : Downloading MedleyDB repo for tracklist"
+  mkdir -p $metadata_dir
+  git clone https://github.com/marl/medleydb.git  $metadata_dir
+  fi
 
 if [[ $stage -le  1 ]]; then
-	echo "Stage 1 : Downloading wsj0-mix mixing scripts"
-	# Link + WHAM is ok for 2 source.
-	#wget https://www.merl.com/demos/deep-clustering/create-speaker-mixtures.zip -O ./local/
-	#unzip ./local/create-speaker-mixtures.zip -d ./local/create-speaker-mixtures
-	#mv ./local/create-speaker-mixtures.zip ./local/create-speaker-mixtures
-
-	echo "You need to generate the wsj0-mix dataset using the official MATLAB
-			  scripts (already downloaded into ./local/create-speaker-mixtures).
-			  If you don't have Matlab, you can use Octavve and replace
-				all mkdir(...) in create_wav_2speakers.m with system(['mkdir -p '...]).
-				Note: for 2-speaker separation, the sep_clean task from WHAM is the same as
-				wsj0-2mix and the mixing scripts are in Python.
-				Specify wsj0mix_wav_dir and start from stage 2 when the mixtures have been generated.
-				Exiting now."
-	#exit 1
+  echo "Stage 1: Download MedleyDB dataset, update dataset path, add custom tracklist if required"
 fi
 
 if [[ $stage -le  2 ]]; then
-	# Make json directories with min/max modes and sampling rates
-	echo "Stage 2: Generating json files including wav path and duration"
-	#for sr_string in 8 16; do
-	#	for mode_option in min max; do
-	#		for tmp_nsrc in 2 3; do
-	#			tmp_dumpdir=data/${tmp_nsrc}speakers/wav${sr_string}k/$mode_option
-	#			echo "Generating json files in $tmp_dumpdir"
-	#			[[ ! -d $tmp_dumpdir ]] && mkdir -p $tmp_dumpdir
-	#			local_wsj_dir=$wsj0mix_wav_dir/${tmp_nsrc}speakers/wav${sr_string}k/$mode_option/
-	#			$python_path local/preprocess_wsj0mix.py --in_dir $local_wsj_dir \
-	#			 																			--n_src $tmp_nsrc \
-	#			 																			--out_dir $tmp_dumpdir
-	#		done
-    #done
-  #done
+	# Make json files with wav paths for instrument set
+	echo "Stage 2: Generating json files including wav path and activity info"
+  $python_path local/preprocess_medleyDB.py --metadata_path $metadata_dir/medleydb/medleydb --json_dir $json_dir --v1_path "$V1_dir" --v2_path "$V2_dir"
+
 fi
 
 # Generate a random ID for the run if no tag is specified
