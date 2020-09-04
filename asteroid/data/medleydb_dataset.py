@@ -112,16 +112,15 @@ class MedleydbDataset(data.Dataset):
         infos = dict()
         infos["dataset"] = self.dataset_name
         infos["task"] = "harmony_sep"
-        infos["licenses"] = [wsj0_license]
+        infos["licenses"] = [mdb_license]
         return infos
 
 
-wsj0_license = dict(
-    title="CSR-I (WSJ0) Complete",
-    title_link="https://catalog.ldc.upenn.edu/LDC93S6A",
-    author="LDC",
-    author_link="https://www.ldc.upenn.edu/",
-    license="LDC User Agreement for Non-Members",
-    license_link="https://catalog.ldc.upenn.edu/license/ldc-non-members-agreement.pdf",
+mdb_license = dict(
+    title="MedleyDB: A Multitrack Dataset for Annotation-Intensive MIR Research",
+    title_link="https://medleydb.weebly.com/",
+    author="R. Bittner, J. Salamon, M. Tierney, M. Mauch, C. Cannam and J. P. Bello",
+    license="Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License",
+    license_link="https://creativecommons.org/licenses/by-nc-sa/4.0/",
     non_commercial=True,
 )
