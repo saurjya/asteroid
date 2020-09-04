@@ -60,7 +60,7 @@ class MedleydbDataset(data.Dataset):
         if segment is None:
             self.seg_len = None
         else:
-            self.seg_len = int(segment * sample_rate)
+            self.seg_len = int(segment)
         self.n_src = n_src
         self.like_test = self.seg_len is None
         # Load json files
@@ -100,7 +100,7 @@ class MedleydbDataset(data.Dataset):
                         drop_len += seg_dur
                         continue
                     else:
-                        sources_infos.append((sources_conf[i][0], k))
+                        sources_infos.append((sources_conf[i][0], k, sources_conf[i][2]))
 
         print(
             "Drop {} utts ({:.2f} h) from ({:.2f} h) with less than {} percent activity".format(
@@ -121,25 +121,25 @@ class MedleydbDataset(data.Dataset):
         """
         # Load sources
         source_arrays = []
-       
+        
         for i in range(self.n_poly):
             if i:
                 idx = random.choice(range(len(self.sources)))
 
-            start = self.sources[idx][1] * self.sample_rate
+            start = self.sources[idx][1] * self.sources[idx][2]
             if self.like_test:
                 stop = None
             else:
-                stop = start + self.seg_len
+                stop = start + (self.seg_len * self.sources[idx][2])
 
             if self.sources[idx] is None:
                 # Target is filled with zeros if n_src > default_nsrc
-                s = np.zeros((self.seg_len,))
+                s = np.zeros((self.seg_len * self.sources[idx][2],))
             else:
                 s, sr = sf.read(self.sources[idx][0], start=start, stop=stop, dtype="float32")
             source_arrays.append(s)
         source = torch.from_numpy(np.vstack(source_arrays))
-        source = torchaudio.transforms.Resample(sr,32000)(source)
+        source = torchaudio.transforms.Resample(sr,self.sample_rate)(source)
         mix = torch.stack(list(source)).sum(0)
         return mix, source
 

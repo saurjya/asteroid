@@ -7,18 +7,23 @@ import scipy
 import librosa
 import matplotlib.pyplot as plt
 
-# import soundfile as sf
+import soundfile as sf
 
 
 def make_processed_filelist(track_list, out_dir, out_filename):
     file_infos = []
+    counter = 0
     for track in track_list:
-        conf = compute_activation_confidence(track)
-        file_infos.append((track, conf.tolist()))
+        print("Processing file", track, counter)
+        conf, rate = compute_activation_confidence(track)
+        file_infos.append((track, conf.tolist(), rate))
+        counter += 1
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
+    print("writing to json file", (os.path.join(out_dir, out_filename + ".json")))
     with open(os.path.join(out_dir, out_filename + ".json"), "w") as f:
         json.dump(file_infos, f, indent=4)
+    print("json file writing complete")
     return
 
 
@@ -69,9 +74,9 @@ def preprocess_metadata(
                                         trim["stem_dir"],
                                         trim["stems"][stem]["filename"],
                                     ),
-                                    counter,
+                                    counter, trim["stems"][stem]["instrument"]
                                 )
-                                print(trim["stems"][stem]["instrument"])
+                                #print(trim["stems"][stem]["instrument"])
                                 inst_tracks.append(
                                     os.path.join(
                                         data_path[ver],
@@ -91,9 +96,9 @@ def preprocess_metadata(
                                             trim["raw_dir"],
                                             trim["stems"][stem]["raw"][raw]["filename"],
                                         ),
-                                        counter,
+                                        counter, trim["stems"][stem]["instrument"]
                                     )
-                                    print(trim["stems"][stem]["instrument"])
+                                    #print(trim["stems"][stem]["instrument"])
                                     inst_tracks.append(
                                         os.path.join(
                                             data_path[ver],
@@ -149,7 +154,8 @@ def compute_activation_confidence(
     # MATLAB equivalent to @hanning(win_len)
     win = scipy.signal.windows.hann(win_len + 2)[1:-1]
 
-    audio, rate = librosa.load(track, sr=44100, mono=True)
+    #audio, rate = librosa.load(track, mono=True)
+    audio, rate = sf.read(track)
     H.append(track_energy(audio.T, win_len, win))
 
     # list to numpy array
@@ -175,7 +181,7 @@ def compute_activation_confidence(
     # stack time column to matrix
     C_out = np.vstack((time, C))
     # print(C_out.T)
-    return C_out.T
+    return C_out.T, rate
 
 
 def track_energy(wave, win_len, win):
