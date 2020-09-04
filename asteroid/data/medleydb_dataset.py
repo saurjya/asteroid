@@ -7,46 +7,6 @@ import soundfile as sf
 import random
 import torchaudio
 
-def make_dataloaders(
-    json_dir,
-    validation_split=0.1,
-    random_seed=42,
-    n_src=1,
-    n_poly=2,
-    sample_rate=44100,
-    segment=5.0,
-    threshold=0.1,
-    batch_size=2,
-    num_workers=None,
-    **kwargs,
-):
-    num_workers = num_workers if num_workers else batch_size
-    total_set = MedleydbDataset(
-        json_dir,
-        n_src=n_src,
-        n_poly=n_poly,
-        sample_rate=sample_rate,
-        segment=segment,
-        threshold=threshold,
-    )
-
-    validation_size = int(validation_split * len(total_set))
-    train_size = len(total_set) - validation_size
-    torch.manual_seed(random_seed)
-    train_set, val_set = data.random_split(
-        total_set,
-        [train_size, validation_size]
-    )
-
-    train_loader = data.DataLoader(
-        train_set, shuffle=False, batch_size=batch_size, num_workers=num_workers, drop_last=True
-    )
-    val_loader = data.DataLoader(
-        val_set, shuffle=False, batch_size=batch_size, num_workers=num_workers, drop_last=True
-    )
-    return train_loader, val_loader
-
-
 class MedleydbDataset(data.Dataset):
     dataset_name = "MedleyDB"
 

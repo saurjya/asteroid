@@ -4,12 +4,11 @@ import json
 
 import torch
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from torch.utils.data import DataLoader
+from torch.utils import data
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 
-from asteroid.data.medleydb_dataset import make_dataloaders
-#from asteroid.data.wham_dataset import WhamDataset
+from asteroid.data.medleydb_dataset import MedleydbDataset
 from asteroid.engine.optimizers import make_optimizer
 from asteroid.engine.system import System
 from asteroid.losses import PITLossWrapper, pairwise_neg_sisdr
@@ -23,17 +22,28 @@ parser.add_argument("--exp_dir", default="exp/tmp", help="Full path to save best
 def main(conf):
     exp_dir = conf["main_args"]["exp_dir"]
     # Define Dataloader
-    train_loader, val_loader = make_dataloaders(
+    total_set = MedleydbDataset(
         conf["data"]["json_dir"],
-        conf["data"]["validation_split"],
-        conf["training"]["random_seed"],
-        conf["data"]["n_inst"],
-        conf["data"]["n_poly"],
-        conf["data"]["sample_rate"],
-        conf["data"]["segment"],
-        conf["data"]["threshold"],
-        conf["training"]["batch_size"],
-        conf["training"]["num_workers"],
+        n_src=conf["data"]["n_inst"],
+        n_poly=conf["data"]["n_poly"],
+        sample_rate=conf["data"]["sample_rate"],
+        segment=conf["data"]["segment"],
+        threshold=conf["data"]["threshold"],
+    )
+    
+    validation_size = int(conf["data"]["validation_split"] * len(total_set))
+    train_size = len(total_set) - validation_size
+    torch.manual_seed(conf["training"]["random_seed"])
+    train_set, val_set = data.random_split(
+        total_set,
+        [train_size, validation_size]
+    )
+
+    train_loader = data.DataLoader(
+        train_set, shuffle=False, batch_size=conf["training"]["batch_size"], num_workers=conf["training"]["num_workers"], drop_last=True
+    )
+    val_loader = data.DataLoader(
+        val_set, shuffle=False, batch_size=conf["training"]["batch_size"], num_workers=conf["training"]["num_workers"], drop_last=True
     )
     conf["masknet"].update({"n_src": conf["data"]["n_inst"] * conf["data"]["n_poly"]})
 
