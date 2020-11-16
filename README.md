@@ -19,13 +19,13 @@
 </div>
 
 --------------------------------------------------------------------------------
-
+This branch contains code for the paper "Choral Music Separation using Time-domain source separation". The modified recipes can be found in the MedleyDB dataloader and egs.
 
 Asteroid is a Pytorch-based audio source separation toolkit
 that enables fast experimentation on common datasets.
 It comes with a source code that supports a large range
 of datasets and architectures, and a set of
- recipes to reproduce some important papers.
+ recipes to reproduce some important papers. 
 
 
 ### You use Asteroid or you want to?
