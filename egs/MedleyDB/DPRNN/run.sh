@@ -3,15 +3,15 @@ set -e  # Exit on error
 
 #if starting from stage 0
 # Destination to save json files with list of track locations for instrument sets
-json_dir=/data/home/acw497
+json_dir=/jmain01/home/JAD007/txk02/sxs01-txk02/data
 # Location for tracklist for all data dirs
 tracklist=  # Directory containing tracklists for V1, V2, Bach10 and others
 
 # Location for MedleyDB V1
-V1_dir="/data/EECS-Sandler-Lab/MedleyDB/V1" # Directory containing MedleyDB V1 audio files
+V1_dir="/data/EECS-Sandler-Lab/MedleyDB/BC" # Directory containing MedleyDB V1 audio files
 
 # Location for MedleyDB V2
-V2_dir="/data/EECS-Sandler-Lab/MedleyDB/V2" # Directory containing MedleyDB V2 audio files
+V2_dir="/data/EECS-Sandler-Lab/MedleyDB/BQ" # Directory containing MedleyDB V2 audio files
 
 # Location for Bach10
 Bach10_dir=  # Directory containing MedleyDB format Bach10 audio files
@@ -20,10 +20,10 @@ Bach10_dir=  # Directory containing MedleyDB format Bach10 audio files
 extra_dir= # Directory containing additional MedleyDB format audio files
 
 # Location for MedleyDB format metadata files for all multitracks
-metadata_dir=/data/home/acw497/medleydb # Directory containing MedleyDB github repository with metadata for all files
+metadata_dir=/jmain01/home/JAD007/txk02/sxs01-txk02/metadata/medleydb # Directory containing MedleyDB github repository with metadata for all files
 
 # Location for evaluation multitrack sourceFolders
-wav_dir=/data/EECS-Sandler-Lab/AcapellaDataset/split/tt/ # Directory containing MedleyDB github repository with metadata for all files
+wav_dir=/jmain01/home/JAD007/txk02/sxs01-txk02/data/split_2/tt/ # Directory containing MedleyDB github repository with metadata for all files
 
 
 
@@ -37,24 +37,25 @@ python_path=python
 # ./run.sh --stage 3 --tag my_tag --loss_alpha 0.1 --id 0,1
 
 # General
-stage=4  # Controls from which stage to start
-tag="11k_4sep_default_DPRNN_lr0005"  # Controls the directory name associated to the experiment
+stage=3  # Controls from which stage to start
+tag="22k_4sep_DPRNN_lr001_rand"  # Controls the directory name associated to the experiment
 # You can ask for several GPUs using id (passed to CUDA_VISIBLE_DEVICES)
 id=$CUDA_VISIBLE_DEVICES
 
 # Data
 #data_dir=data  # Local data directory (No disk space needed)
-sample_rate=11025
+sample_rate=22050
 n_inst=1  # 2 or 3
 n_poly=4
 segment=5.0
 # Training
-batch_size=4
+batch_size=2
 num_workers=10
 optimizer=rmsprop
-lr=0.0005
-weight_decay=0.0
-epochs=200
+lr=0.001
+weight_decay=0.00001
+#weight_decay=0
+epochs=120
 loss_alpha=1.0  # DC loss weight : 1.0 => DC, <1.0 => Chimera
 take_log=true  # Whether to input log mag spec to the NN
 
@@ -92,7 +93,7 @@ uuid=$($python_path -c 'import uuid, sys; print(str(uuid.uuid4())[:8])')
 if [[ -z ${tag} ]]; then
 	tag=${n_src}sep_${sr_string}k${mode}_${uuid}
 fi
-expdir=/data/home/acw497/asteroid/egs/MedleyDB/DPRNN/exp/train_convtasnet_11k_4sep_default_DPRNN_lr0005
+#expdir=/data/home/acw497/asteroid/egs/MedleyDB/DPRNN/exp/train_convtasnet_11k_4sep_default_DPRNN_lr0005
 if [[ $stage -le 3 ]]; then
   echo "Stage 3: Training"
   expdir=exp/train_convtasnet_${tag}

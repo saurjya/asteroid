@@ -18,8 +18,8 @@ from asteroid.models import ConvTasNet
 parser = argparse.ArgumentParser()
 parser.add_argument("--exp_dir", default="exp/tmp", help="Full path to save best validation model")
 #test_dir = "/data/EECS-Sandler-Lab/AcapellaDataset/split/tt/"
-train_dir = "/data/EECS-Sandler-Lab/AcapellaDataset/split/tr/"
-val_dir = "/data/EECS-Sandler-Lab/AcapellaDataset/split/cv/"
+train_dir = "/jmain01/home/JAD007/txk02/sxs01-txk02/data/split_5/tr/"
+val_dir = "/jmain01/home/JAD007/txk02/sxs01-txk02/data/split_5/cv/"
 
 def main(conf):
     exp_dir = conf["main_args"]["exp_dir"]
@@ -76,7 +76,8 @@ def main(conf):
     # Define scheduler
     scheduler = None
     if conf["training"]["half_lr"]:
-        scheduler = ReduceLROnPlateau(optimizer=optimizer, factor=0.5, patience=3)
+        scheduler = ReduceLROnPlateau(optimizer=optimizer, factor=0.5, patience=5)
+        monitor = "val_loss"
     # Just after instantiating, save the args. Easy loading in the future.
     exp_dir = conf["main_args"]["exp_dir"]
     os.makedirs(exp_dir, exist_ok=True)
@@ -85,10 +86,10 @@ def main(conf):
         yaml.safe_dump(conf, outfile)
 
     # Define Loss function.
-    #loss_func = PITLossWrapper(pairwise_neg_sisdr, pit_from="pw_mtx")
+    loss_func = PITLossWrapper(pairwise_neg_sisdr, pit_from="pw_mtx")
     #loss_func = PITLossWrapper(SingleSrcMultiScaleSpectral, pit_from="pw_pt")
     #loss_func = torch.nn.L1Loss()
-    loss_func = pairwise_neg_sisdr
+    #loss_func = pairwise_neg_sisdr
 
     system = System(
         model=model,
@@ -99,7 +100,7 @@ def main(conf):
         scheduler=scheduler,
         config=conf,
     )
-
+    '''
     # Callbacks
     checkpoint_dir = os.path.join(exp_dir, "checkpoints/")
     checkpoint = ModelCheckpoint(
@@ -108,19 +109,30 @@ def main(conf):
     early_stopping = False
     if conf["training"]["early_stop"]:
         early_stopping = EarlyStopping(monitor="val_loss", patience=15, verbose=1)
-    # gpus = 1
+    '''
+    # Define callbacks
+    callbacks = []
+    checkpoint_dir = os.path.join(exp_dir, "checkpoints/")
+    checkpoint = ModelCheckpoint(
+        checkpoint_dir, monitor="val_loss", mode="min", save_top_k=5, verbose=True
+    )
+    callbacks.append(checkpoint)
+    if conf["training"]["early_stop"]:
+        callbacks.append(EarlyStopping(monitor="val_loss", mode="min", patience=30, verbose=True))
+
+    #gpus = -1
     # Don't ask GPU if they are not available.
     gpus = -1 if torch.cuda.is_available() else None
     trainer = pl.Trainer(
         max_epochs=conf["training"]["epochs"],
-        checkpoint_callback=checkpoint,
-        early_stop_callback=early_stopping,
+        callbacks=callbacks,
         default_root_dir=exp_dir,
         gpus=gpus,
-        distributed_backend="dp",
-        train_percent_check=1.0,  # Useful for fast experiment
+        distributed_backend="ddp",
+        limit_train_batches=1.0,  # Useful for fast experiment
         gradient_clip_val=5.0,
     )
+
     trainer.fit(system)
 
     best_k = {k: v.item() for k, v in checkpoint.best_k_models.items()}

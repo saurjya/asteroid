@@ -9,7 +9,7 @@ import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 
 from asteroid import DPRNNTasNet
-#from asteroid.data.medleydb_dataset import MedleydbDataset
+from asteroid.data.medleydb_dataset import MedleydbDataset
 
 from asteroid.engine.optimizers import make_optimizer
 from asteroid.engine.system import System
@@ -24,14 +24,16 @@ from asteroid.data.medleydb_dataset import SourceFolderDataset
 # will limit the number of available GPUs for train.py .
 parser = argparse.ArgumentParser()
 parser.add_argument("--exp_dir", default="exp/tmp", help="Full path to save best validation model")
-train_dir = "/data/EECS-Sandler-Lab/AcapellaDataset/split/tr/"
-val_dir = "/data/EECS-Sandler-Lab/AcapellaDataset/split/cv/"
+train_dir = "/jmain01/home/JAD007/txk02/sxs01-txk02/data/split_2/tr/"
+val_dir = "/jmain01/home/JAD007/txk02/sxs01-txk02/data/split_2/cv/"
+
 
 
 def main(conf):
     exp_dir = conf["main_args"]["exp_dir"]
     # Define Dataloader
-    """total_set = MedleydbDataset(
+    """
+    total_set = MedleydbDataset(
         conf["data"]["json_dir"],
         n_src=conf["data"]["n_inst"],
         n_poly=conf["data"]["n_poly"],
@@ -44,7 +46,7 @@ def main(conf):
     train_size = len(total_set) - validation_size
     torch.manual_seed(conf["training"]["random_seed"])
     train_set, val_set = data.random_split(total_set, [train_size, validation_size])
-"""
+    """
     train_set = SourceFolderDataset(
         train_dir,
         train_dir,
@@ -59,7 +61,7 @@ def main(conf):
         conf["data"]["sample_rate"],
         conf["training"]["batch_size"],
     )
-
+    
     train_loader = data.DataLoader(
         train_set,
         shuffle=False,
@@ -102,23 +104,23 @@ def main(conf):
     )
 
     # Define callbacks
+    callbacks = []
     checkpoint_dir = os.path.join(exp_dir, "checkpoints/")
     checkpoint = ModelCheckpoint(
         checkpoint_dir, monitor="val_loss", mode="min", save_top_k=5, verbose=True
     )
-    early_stopping = False
+    callbacks.append(checkpoint)
     if conf["training"]["early_stop"]:
-        early_stopping = EarlyStopping(monitor="val_loss", patience=30, verbose=True)
+        callbacks.append(EarlyStopping(monitor="val_loss", mode="min", patience=30, verbose=True))
 
     # Don't ask GPU if they are not available.
     gpus = -1 if torch.cuda.is_available() else None
     trainer = pl.Trainer(
         max_epochs=conf["training"]["epochs"],
-        checkpoint_callback=checkpoint,
-        early_stop_callback=early_stopping,
+        callbacks=callbacks,
         default_root_dir=exp_dir,
         gpus=gpus,
-        distributed_backend="dp",
+        distributed_backend="ddp",
         gradient_clip_val=conf["training"]["gradient_clipping"],
     )
     trainer.fit(system)

@@ -32,7 +32,7 @@ parser.add_argument(
 )
 parser.add_argument("--exp_dir", default="exp/tmp", help="Experiment root")
 parser.add_argument(
-    "--n_save_ex", type=int, default=50, help="Number of audio examples to save, -1 means all"
+    "--n_save_ex", type=int, default=-1, help="Number of audio examples to save, -1 means all"
 )
 
 compute_metrics = ["si_sdr", "sdr", "sir", "sar"]

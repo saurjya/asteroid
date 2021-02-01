@@ -3,6 +3,7 @@ from torch.utils import data
 import json
 import os
 import numpy as np
+import random
 import soundfile as sf
 import random
 import torchaudio
@@ -146,7 +147,7 @@ class MedleydbDataset(data.Dataset):
 class SourceFolderDataset(data.Dataset):
     dataset_name = "SourceFolder"
 
-    def __init__(self, json_dir, wav_dir, n_src=1, sample_rate=44100, batch_size=1):
+    def __init__(self, json_dir, wav_dir, n_src=1, sample_rate=44100, batch_size=1, train=True):
         super(SourceFolderDataset, self).__init__()
         # Task setting
         self.json_dir = json_dir
@@ -174,10 +175,17 @@ class SourceFolderDataset(data.Dataset):
         
         for src_json in sources_json:
             with open(src_json, "r") as f:
-                sources_infos.append(json.load(f))
+                temp = json.load(f)
+                if train:
+                    split = len(temp)/2
+                    temp1 = temp[:split]
+                    temp2 = temp[split:]
+                    random.shuffle(temp2)
+                sources_infos.append(temp1+temp2)
         
-
+        #sources_infos = [shuffle(x) for x in sources_infos]
         sources_infos = np.array(sources_infos)
+        #sources_infos = [shuffle(x) for x in sources_infos]
         #sources_infos = np.swapaxes(sources_infos, 0,1)    
         self.mix = mix_infos
         self.sources = sources_infos
