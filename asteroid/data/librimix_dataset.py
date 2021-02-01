@@ -15,32 +15,35 @@ MINI_URL = "https://zenodo.org/record/3871592/files/MiniLibriMix.zip?download=1"
 
 
 class LibriMix(Dataset):
-    """" Dataset class for Librimix source separation tasks.
+    """Dataset class for LibriMix source separation tasks.
 
     Args:
-        csv_dir (str): The path to the metatdata file
+        csv_dir (str): The path to the metadata file.
         task (str): One of ``'enh_single'``, ``'enh_both'``, ``'sep_clean'`` or
-            ``'sep_noisy'``.
+            ``'sep_noisy'`` :
 
             * ``'enh_single'`` for single speaker speech enhancement.
             * ``'enh_both'`` for multi speaker speech enhancement.
             * ``'sep_clean'`` for two-speaker clean source separation.
             * ``'sep_noisy'`` for two-speaker noisy source separation.
 
-        sample_rate (int) : The sample rate of the sources and mixtures
-        n_src (int) : The number of sources in the mixture
-        segment (int) : The desired sources and mixtures length in s
+        sample_rate (int) : The sample rate of the sources and mixtures.
+        n_src (int) : The number of sources in the mixture.
+        segment (int, optional) : The desired sources and mixtures length in s.
 
     References
-        "LibriMix: An Open-Source Dataset for Generalizable Speech Separation",
+        [1] "LibriMix: An Open-Source Dataset for Generalizable Speech Separation",
         Cosentino et al. 2020.
     """
 
     dataset_name = "LibriMix"
 
-    def __init__(self, csv_dir, task="sep_clean", sample_rate=16000, n_src=2, segment=3):
+    def __init__(
+        self, csv_dir, task="sep_clean", sample_rate=16000, n_src=2, segment=3, return_id=False
+    ):
         self.csv_dir = csv_dir
         self.task = task
+        self.return_id = return_id
         # Get the csv corresponding to the task
         if task == "enh_single":
             md_file = [f for f in os.listdir(csv_dir) if "single" in f][0]
@@ -81,7 +84,8 @@ class LibriMix(Dataset):
         # Get the row in dataframe
         row = self.df.iloc[idx]
         # Get mixture path
-        self.mixture_path = row["mixture_path"]
+        mixture_path = row["mixture_path"]
+        self.mixture_path = mixture_path
         sources_list = []
         # If there is a seg start point is set randomly
         if self.seg_len is not None:
@@ -103,18 +107,22 @@ class LibriMix(Dataset):
                 s, _ = sf.read(source_path, dtype="float32", start=start, stop=stop)
                 sources_list.append(s)
         # Read the mixture
-        mixture, _ = sf.read(self.mixture_path, dtype="float32", start=start, stop=stop)
+        mixture, _ = sf.read(mixture_path, dtype="float32", start=start, stop=stop)
         # Convert to torch tensor
         mixture = torch.from_numpy(mixture)
         # Stack sources
         sources = np.vstack(sources_list)
         # Convert sources to tensor
         sources = torch.from_numpy(sources)
-        return mixture, sources
+        if not self.return_id:
+            return mixture, sources
+        # 5400-34479-0005_4973-24515-0007.wav
+        id1, id2 = mixture_path.split("/")[-1].split(".")[0].split("_")
+        return mixture, sources, [id1, id2]
 
     @classmethod
     def loaders_from_mini(cls, batch_size=4, **kwargs):
-        """ Downloads MiniLibriMix and returns train and validation DataLoader.
+        """Downloads MiniLibriMix and returns train and validation DataLoader.
 
         Args:
             batch_size (int): Batch size of the Dataloader. Only DataLoader param.
@@ -122,13 +130,13 @@ class LibriMix(Dataset):
                 instantiate the DatalLoader.
             **kwargs: keyword arguments to pass the `LibriMix`, see `__init__`.
                 The kwargs will be fed to both the training set and validation
-                set
+                set.
 
         Returns:
             train_loader, val_loader: training and validation DataLoader out of
-                `LibriMix` Dataset.
+            `LibriMix` Dataset.
 
-        Examples:
+        Examples
             >>> from asteroid.data import LibriMix
             >>> train_loader, val_loader = LibriMix.loaders_from_mini(
             >>>     task='sep_clean', batch_size=4
@@ -141,7 +149,7 @@ class LibriMix(Dataset):
 
     @classmethod
     def mini_from_download(cls, **kwargs):
-        """ Downloads MiniLibriMix and returns train and validation Dataset.
+        """Downloads MiniLibriMix and returns train and validation Dataset.
         If you want to instantiate the Dataset by yourself, call
         `mini_download` that returns the path to the path to the metadata files.
 
@@ -152,9 +160,9 @@ class LibriMix(Dataset):
 
         Returns:
             train_set, val_set: training and validation instances of
-                `LibriMix` (data.Dataset).
+            `LibriMix` (data.Dataset).
 
-        Examples:
+        Examples
             >>> from asteroid.data import LibriMix
             >>> train_set, val_set = LibriMix.mini_from_download(task='sep_clean')
         """
@@ -176,7 +184,7 @@ class LibriMix(Dataset):
 
     @staticmethod
     def mini_download():
-        """ Downloads MiniLibriMix from Zenodo in current directory
+        """Downloads MiniLibriMix from Zenodo in current directory
 
         Returns:
             The path to the metadata directory.
@@ -205,7 +213,7 @@ class LibriMix(Dataset):
         return "./MiniLibriMix/metadata"
 
     def get_infos(self):
-        """ Get dataset infos (for publishing models).
+        """Get dataset infos (for publishing models).
 
         Returns:
             dict, dataset infos with keys `dataset`, `task` and `licences`.

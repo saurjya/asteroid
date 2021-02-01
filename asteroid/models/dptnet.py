@@ -1,10 +1,10 @@
-from ..filterbanks import make_enc_dec
+from asteroid_filterbanks import make_enc_dec
 from ..masknn import DPTransformer
-from .base_models import BaseTasNet
+from .base_models import BaseEncoderMaskerDecoder
 
 
-class DPTNet(BaseTasNet):
-    """ DPTNet separation model, as described in [1].
+class DPTNet(BaseEncoderMaskerDecoder):
+    """DPTNet separation model, as described in [1].
 
     Args:
         n_src (int): Number of masks to estimate.
@@ -39,18 +39,20 @@ class DPTNet(BaseTasNet):
         kernel_size (int): Length of the filters.
         stride (int, optional): Stride of the convolution.
             If None (default), set to ``kernel_size // 2``.
+        sample_rate (float): Sampling rate of the model.
         **fb_kwargs (dict): Additional kwards to pass to the filterbank
             creation.
 
-    References:
-        [1]: Jingjing Chen et al. "Dual-Path Transformer Network: Direct
-            Context-Aware Modeling for End-to-End Monaural Speech Separation"
-            Interspeech 2020.
+    References
+        - [1]: Jingjing Chen et al. "Dual-Path Transformer Network: Direct
+          Context-Aware Modeling for End-to-End Monaural Speech Separation"
+          Interspeech 2020.
     """
 
     def __init__(
         self,
         n_src,
+        n_heads=4,
         ff_hid=256,
         chunk_size=100,
         hop_size=None,
@@ -66,10 +68,16 @@ class DPTNet(BaseTasNet):
         kernel_size=16,
         n_filters=64,
         stride=8,
+        sample_rate=8000,
         **fb_kwargs,
     ):
         encoder, decoder = make_enc_dec(
-            fb_name, kernel_size=kernel_size, n_filters=n_filters, stride=stride, **fb_kwargs
+            fb_name,
+            kernel_size=kernel_size,
+            n_filters=n_filters,
+            stride=stride,
+            sample_rate=sample_rate,
+            **fb_kwargs,
         )
         n_feats = encoder.n_feats_out
         if in_chan is not None:
@@ -83,6 +91,7 @@ class DPTNet(BaseTasNet):
         masker = DPTransformer(
             n_feats,
             n_src,
+            n_heads=n_heads,
             ff_hid=ff_hid,
             ff_activation=ff_activation,
             chunk_size=chunk_size,

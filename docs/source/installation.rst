@@ -25,9 +25,11 @@ Development installation
 
 For development installation, you can fork/clone the GitHub repo and locally install it with pip::
 
-    git clone https://github.com/mpariente/asteroid
+    git clone https://github.com/asteroid-team/asteroid
     cd asteroid
     pip install -e .
 
 This is an editable install (``-e`` flag), it means that source code changes (or branch switching) are
 automatically taken into account when importing asteroid.
+
+You can also use ``conda env create -f environment.yml`` to create a Conda env directly.

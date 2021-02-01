@@ -100,23 +100,24 @@ def main(conf):
     )
 
     # Define callbacks
+    callbacks = []
     checkpoint_dir = os.path.join(exp_dir, "checkpoints/")
     checkpoint = ModelCheckpoint(
         checkpoint_dir, monitor="val_loss", mode="min", save_top_k=5, verbose=True
     )
-    early_stopping = False
+    callbacks.append(checkpoint)
     if conf["training"]["early_stop"]:
-        early_stopping = EarlyStopping(monitor="val_loss", patience=30, verbose=True)
+        callbacks.append(EarlyStopping(monitor="val_loss", mode="min", patience=30, verbose=True))
 
     # Don't ask GPU if they are not available.
     gpus = -1 if torch.cuda.is_available() else None
+    distributed_backend = "ddp" if torch.cuda.is_available() else None
     trainer = pl.Trainer(
         max_epochs=conf["training"]["epochs"],
-        checkpoint_callback=checkpoint,
-        early_stop_callback=early_stopping,
+        callbacks=callbacks,
         default_root_dir=exp_dir,
         gpus=gpus,
-        distributed_backend="dp",
+        distributed_backend=distributed_backend,
         gradient_clip_val=conf["training"]["gradient_clipping"],
     )
     trainer.fit(system)
@@ -128,7 +129,7 @@ def main(conf):
 
 if __name__ == "__main__":
     import yaml
-    from pprint import pprint as print
+    from pprint import pprint
     from asteroid.utils import prepare_parser_from_dict, parse_args_as_dict
 
     # We start with opening the config file conf.yml as a dictionary from
@@ -144,5 +145,5 @@ if __name__ == "__main__":
     # the attributes in an non-hierarchical structure. It can be useful to also
     # have it so we included it here but it is not used.
     arg_dic, plain_args = parse_args_as_dict(parser, return_plain_args=True)
-    print(arg_dic)
+    pprint(arg_dic)
     main(arg_dic)

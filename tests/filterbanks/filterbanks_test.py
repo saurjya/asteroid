@@ -41,7 +41,7 @@ def test_fb_def_and_forward_lowdim(fb_class, fb_config):
     # Assert for 4D inputs
     tf_out_4d = tf_out.repeat(1, 2, 1, 1)
     out_4d = dec(tf_out_4d)
-    assert_allclose(out, out_4d[:, 0])
+    assert_allclose(out, out_4d[:, :1])
     # Asser for 2D inputs
     assert_allclose(out[0, 0], dec(tf_out[0]))
     assert tf_out.shape[1] == enc.filterbank.n_feats_out
@@ -85,14 +85,14 @@ def test_fb_forward_multichannel(fb_class, fb_config, ndim):
 @pytest.mark.parametrize("kernel_size", [256, 257])
 def test_complexfb_shapes(fb_class, n_filters, kernel_size):
     fb = fb_class(n_filters, kernel_size)
-    assert fb.filters.shape[0] == 2 * (n_filters // 2)
+    assert fb.filters().shape[0] == 2 * (n_filters // 2)
 
 
 @pytest.mark.parametrize("kernel_size", [256, 257, 128, 129])
 def test_paramsinc_shape(kernel_size):
     """ ParamSincFB has odd length filters """
     fb = ParamSincFB(n_filters=200, kernel_size=kernel_size)
-    assert fb.filters.shape[-1] == 2 * (kernel_size // 2) + 1
+    assert fb.filters().shape[-1] == 2 * (kernel_size // 2) + 1
 
 
 @pytest.mark.parametrize("fb_class", [FreeFB, AnalyticFreeFB, ParamSincFB, MultiphaseGammatoneFB])
@@ -102,7 +102,7 @@ def test_pinv_of(fb_class):
     # Pseudo inverse can be taken from an Encoder/Decoder class or Filterbank.
     decoder_e = Decoder.pinv_of(encoder)
     decoder_f = Decoder.pinv_of(fb)
-    assert_allclose(decoder_e.filters, decoder_f.filters)
+    assert_allclose(decoder_e.filters(), decoder_f.filters())
 
     # Check filter computing
     inp = torch.randn(1, 1, 32000)
@@ -112,7 +112,7 @@ def test_pinv_of(fb_class):
     # Pseudo inverse can be taken from an Encoder/Decoder class or Filterbank.
     encoder_e = Encoder.pinv_of(decoder)
     encoder_f = Encoder.pinv_of(fb)
-    assert_allclose(encoder_e.filters, encoder_f.filters)
+    assert_allclose(encoder_e.filters(), encoder_f.filters())
 
 
 @pytest.mark.parametrize("who", ["enc", "dec"])
@@ -136,7 +136,6 @@ def test_get_none():
 
 def test_register():
     class Custom(filterbanks.Filterbank):
-        @property
         def filters(self):
             return None
 

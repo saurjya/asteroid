@@ -48,7 +48,7 @@ WHAMR_TASKS["sep_noisy_reverb"] = WHAMR_TASKS["sep_reverb_noisy"]
 
 
 class WhamRDataset(data.Dataset):
-    """ Dataset class for WHAMR source separation and speech enhancement tasks.
+    """Dataset class for WHAMR source separation and speech enhancement tasks.
 
     Args:
         json_dir (str): The path to the directory containing the json files.
@@ -56,13 +56,13 @@ class WhamRDataset(data.Dataset):
             or ``'sep_reverb_noisy'``.
 
             * ``'sep_clean'`` for two-speaker clean (anechoic) source
-                separation.
+              separation.
             * ``'sep_noisy'`` for two-speaker noisy (anechoic) source
-                separation.
+              separation.
             * ``'sep_reverb'`` for two-speaker clean reverberant
-                source separation.
+              source separation.
             * ``'sep_reverb_noisy'`` for two-speaker noisy reverberant source
-                separation.
+              separation.
 
         sample_rate (int, optional): The sampling rate of the wav files.
         segment (float, optional): Length of the segments used for training,
@@ -72,9 +72,8 @@ class WhamRDataset(data.Dataset):
             If None, defaults to one for enhancement tasks and two for
             separation tasks.
 
-    References:
-        "WHAMR!: Noisy and Reverberant Single-Channel Speech Separation",
-        Maciejewski et al. 2020
+    References
+        "WHAMR!: Noisy and Reverberant Single-Channel Speech Separation", Maciejewski et al. 2020
     """
 
     dataset_name = "WHAMR"
@@ -151,7 +150,7 @@ class WhamRDataset(data.Dataset):
         return len(self.mix)
 
     def __getitem__(self, idx):
-        """ Gets a mixture/sources pair.
+        """Gets a mixture/sources pair.
         Returns:
             mixture, vstack([source_arrays])
         """
@@ -180,7 +179,7 @@ class WhamRDataset(data.Dataset):
         return torch.from_numpy(x), sources
 
     def get_infos(self):
-        """ Get dataset infos (for publishing models).
+        """Get dataset infos (for publishing models).
 
         Returns:
             dict, dataset infos with keys `dataset`, `task` and `licences`.

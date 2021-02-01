@@ -30,7 +30,7 @@ author = "Manuel Pariente et al."
 # The short X.Y version
 version = "0.4.0"
 # The full version, including alpha/beta/rc tags
-release = "0.4.0alpha"
+release = "0.4.0rc1"
 
 # -- General configuration ---------------------------------------------------
 
@@ -53,10 +53,9 @@ extensions = [
     # 'sphinxcontrib.fulltoc',  # breaks pytorch-theme with unexpected
     # w argument 'titles_only'
     # We can either use viewcode, which shows source code in the doc page
-    "sphinx.ext.viewcode",
-    # Or linkcode to find the corresponding code in github. Start with viewcode
-    # 'sphinx.ext.linkcode',
+    "sphinx.ext.linkcode",
     # 'recommonmark',
+    "sphinxcontrib.programoutput",
     "m2r2",
     "nbsphinx",
 ]
@@ -106,6 +105,47 @@ exclude_patterns = []
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = None
 
+
+# Resolve function for the linkcode extension. Now, the source button links
+# to the Github code instead of code in the docs.
+def linkcode_resolve(domain, info):
+    # TODO: handle the release better. Maybe use the versioneer?
+    if domain != "py" or not info["module"]:
+        return None
+    info["module"] = info["module"].replace("asteroid.filterbanks", "asteroid_filterbanks")
+    link_to_afb = "asteroid_filterbanks" in info["module"]
+    repos_name = "asteroid_filterbanks" if link_to_afb else "asteroid"
+
+    def str_from(string, start="asteroid"):
+        return string[string.find(start) :]
+
+    def find_source():
+        import inspect
+
+        # try to find the correct line number, based on code from numpy and lasagne (5 years old)
+        # get(asteroid, engine) -> get(engine, system) -> get(system, engine)
+        obj = sys.modules[info["module"]]
+        for part in info["fullname"].split("."):
+            obj = getattr(obj, part)
+        fn = inspect.getsourcefile(obj)
+        source, lineno = inspect.getsourcelines(obj)
+        return fn, lineno, lineno + len(source) - 1
+
+    filename = info["module"].replace(".", "/")
+    tag = "master" if "dev" in release else ("v" + release)
+
+    if "asteroid_filterbanks" in filename:
+        base_url = "https://github.com/asteroid-team/asteroid-filterbanks/blob/master/%s"
+    else:
+        base_url = f"https://github.com/asteroid-team/asteroid/blob/{tag}/%s"
+
+    try:
+        file, start, end = find_source()
+    except:
+        return base_url % str_from(filename, start=repos_name)
+    return base_url % str_from(file, start=repos_name) + "#L%d-L%d" % (start, end)
+
+
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
@@ -123,7 +163,7 @@ html_theme_path = [asteroid_sphinx_theme.get_html_theme_path()]
 
 html_theme_options = {
     "pytorch_project": "docs",
-    "canonical_url": "https://github.com/mpariente/asteroid",
+    "canonical_url": "https://github.com/asteroid-team/asteroid",
     "collapse_navigation": False,
     "display_version": True,
     "logo_only": False,
@@ -282,7 +322,7 @@ def setup(app):
 # https://stackoverflow.com/questions/15889621/sphinx-how-to-exclude-imports-in-automodule
 
 MOCK_REQUIRE_PACKAGES = []
-with open(os.path.join(PATH_ROOT, "requirements.txt"), "r") as fp:
+with open(os.path.join(PATH_ROOT, "requirements", "docs.txt"), "r") as fp:
     for ln in fp.readlines():
         found = [ln.index(ch) for ch in list(",=<>#") if ch in ln]
         pkg = ln[: min(found)] if found else ln
@@ -345,7 +385,8 @@ autodoc_mock_imports = MOCK_REQUIRE_PACKAGES + MOCK_MANUAL_PACKAGES
 autodoc_inherit_docstring = False
 autodoc_default_flags = ["members", "show-inheritance"]
 # Order functions by appearance in source (default 'alphabetical')
-autodoc_member_order = "groupwise"
+autodoc_member_order = "bysource"
+# autodoc_member_order = "groupwise"
 
 
 # autodoc_member_order = 'groupwise'

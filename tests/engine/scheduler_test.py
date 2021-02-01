@@ -33,7 +33,7 @@ def test_noam_scheduler():
     model, optimizer, loader, trainer = common_setup()
     scheduler = {
         "scheduler": NoamScheduler(optimizer, d_model=10, warmup_steps=100),
-        "interval": "batch",
+        "interval": "step",
     }
 
     system = System(
@@ -45,6 +45,8 @@ def test_noam_scheduler():
         scheduler=scheduler,
     )
     trainer.fit(system)
+    # Test `as_tensor` for `plot`
+    scheduler["scheduler"].as_tensor()
 
 
 def test_dptnet_scheduler():
@@ -52,7 +54,7 @@ def test_dptnet_scheduler():
 
     scheduler = {
         "scheduler": DPTNetScheduler(optimizer, d_model=10, steps_per_epoch=6, warmup_steps=4),
-        "interval": "batch",
+        "interval": "step",
     }
 
     system = System(
@@ -64,3 +66,5 @@ def test_dptnet_scheduler():
         scheduler=scheduler,
     )
     trainer.fit(system)
+    # Test `as_tensor` for `plot`
+    scheduler["scheduler"].as_tensor()

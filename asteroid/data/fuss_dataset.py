@@ -6,7 +6,7 @@ import soundfile as sf
 
 
 class FUSSDataset(Dataset):
-    """ Dataset class for FUSS[1] tasks.
+    """Dataset class for FUSS [1] tasks.
 
     Args:
         file_list_path (str): Path to the txt (csv) file created at stage 2
@@ -14,9 +14,9 @@ class FUSSDataset(Dataset):
         return_bg (bool): Whether to return the background along the mixture
             and sources (useful for SIR, SAR computation). Default: False.
 
-    References:
+    References
         [1] Scott Wisdom et al. "What's All the FUSS About Free Universal
-            Sound Separation Data?", 2020, in preparation.
+        Sound Separation Data?", 2020, in preparation.
     """
 
     dataset_name = "FUSS"
@@ -65,7 +65,7 @@ class FUSSDataset(Dataset):
         return torch.from_numpy(mix), sources
 
     def get_infos(self):
-        """ Get dataset infos (for publishing models).
+        """Get dataset infos (for publishing models).
 
         Returns:
             dict, dataset infos with keys `dataset`, `task` and `licences`.

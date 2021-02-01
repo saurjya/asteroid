@@ -2,13 +2,12 @@ import numpy as np
 import torch
 from torch import tensor
 import torch.nn as nn
-from scipy.io import loadmat
 import pathlib
 import os
 
 
 class SingleSrcPMSQE(nn.Module):
-    """ Computes the Perceptual Metric for Speech Quality Evaluation (PMSQE)
+    """Computes the Perceptual Metric for Speech Quality Evaluation (PMSQE)
     as described in [1].
     This version is only designed for 16 kHz (512 length DFT).
     Adaptation to 8 kHz could be done by changing the parameters of the
@@ -26,11 +25,12 @@ class SingleSrcPMSQE(nn.Module):
         gain_eq (bool, optional): Whether to apply gain equalization.
         sample_rate (int): Sample rate of the input audio.
 
-    References:
+    References
         [1] J.M.Martin, A.M.Gomez, J.A.Gonzalez, A.M.Peinado 'A Deep Learning
         Loss Function based on the Perceptual Evaluation of the
         Speech Quality', IEEE Signal Processing Letters, 2018.
         Implemented by Juan M. Martin. Contact: mdjuamart@ugr.es
+
         Copyright 2019: University of Granada, Signal Processing, Multimedia
         Transmission and Speech/Audio Technologies (SigMAT) Group.
 
@@ -38,22 +38,22 @@ class SingleSrcPMSQE(nn.Module):
         algorithm, this function consists of two regularization factors :
         the symmetrical and asymmetrical distortion in the loudness domain.
 
-    Examples:
+    Examples
         >>> import torch
-        >>> from asteroid.filterbanks import STFTFB, Encoder, transforms
+        >>> from asteroid_filterbanks import STFTFB, Encoder, transforms
         >>> from asteroid.losses import PITLossWrapper, SingleSrcPMSQE
         >>> stft = Encoder(STFTFB(kernel_size=512, n_filters=512, stride=256))
         >>> # Usage by itself
         >>> ref, est = torch.randn(2, 1, 16000), torch.randn(2, 1, 16000)
-        >>> ref_spec = transforms.take_mag(stft(ref))
-        >>> est_spec = transforms.take_mag(stft(est))
+        >>> ref_spec = transforms.mag(stft(ref))
+        >>> est_spec = transforms.mag(stft(est))
         >>> loss_func = SingleSrcPMSQE()
         >>> loss_value = loss_func(est_spec, ref_spec)
         >>> # Usage with PITLossWrapper
         >>> loss_func = PITLossWrapper(SingleSrcPMSQE(), pit_from='pw_pt')
         >>> ref, est = torch.randn(2, 3, 16000), torch.randn(2, 3, 16000)
-        >>> ref_spec = transforms.take_mag(stft(ref))
-        >>> est_spec = transforms.take_mag(stft(est))
+        >>> ref_spec = transforms.mag(stft(ref))
+        >>> est_spec = transforms.mag(stft(est))
         >>> loss_value = loss_func(ref_spec, est_spec)
     """
 
@@ -118,11 +118,8 @@ class SingleSrcPMSQE(nn.Module):
         Returns
             torch.tensor of shape (B, ), wD + 0.309 * wDA
 
-        Notes
-            Dimensions (B, F, T) are also supported by SingleSrcPMSQE but are
+        ..note:: Dimensions (B, F, T) are also supported by SingleSrcPMSQE but are
             less efficient because input tensors are transposed (not inplace).
-
-        Examples
 
         """
         assert est_targets.shape == targets.shape
@@ -485,7 +482,7 @@ class SingleSrcPMSQE(nn.Module):
         # Bark matrix
         local_path = pathlib.Path(__file__).parent.absolute()
         bark_path = os.path.join(local_path, "bark_matrix_16k.mat")
-        bark_matrix = loadmat(bark_path)["Bark_matrix_16k"].astype("float32")
+        bark_matrix = self.load_mat(bark_path)["Bark_matrix_16k"].astype("float32")
         self.bark_matrix = nn.Parameter(tensor(bark_matrix), requires_grad=False)
 
     def register_8k_constants(self):
@@ -630,5 +627,10 @@ class SingleSrcPMSQE(nn.Module):
         # Bark matrix
         local_path = pathlib.Path(__file__).parent.absolute()
         bark_path = os.path.join(local_path, "bark_matrix_8k.mat")
-        bark_matrix = loadmat(bark_path)["Bark_matrix_8k"].astype("float32")
+        bark_matrix = self.load_mat(bark_path)["Bark_matrix_8k"].astype("float32")
         self.bark_matrix = nn.Parameter(tensor(bark_matrix), requires_grad=False)
+
+    def load_mat(self, *args, **kwargs):
+        from scipy.io import loadmat
+
+        return loadmat(*args, **kwargs)

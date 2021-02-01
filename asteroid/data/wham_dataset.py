@@ -6,7 +6,6 @@ import numpy as np
 import soundfile as sf
 from .wsj0_mix import wsj0_license
 
-EPS = 1e-8
 
 DATASET = "WHAM"
 # WHAM tasks
@@ -34,7 +33,7 @@ def normalize_tensor_wav(wav_tensor, eps=1e-8, std=None):
 
 
 class WhamDataset(data.Dataset):
-    """ Dataset class for WHAM source separation and speech enhancement tasks.
+    """Dataset class for WHAM source separation and speech enhancement tasks.
 
     Args:
         json_dir (str): The path to the directory containing the json files.
@@ -56,7 +55,7 @@ class WhamDataset(data.Dataset):
         normalize_audio (bool): If True then both sources and the mixture are
             normalized with the standard deviation of the mixture.
 
-    References:
+    References
         "WHAM!: Extending Speech Separation to Noisy Environments",
         Wichern et al. 2019
     """
@@ -84,6 +83,7 @@ class WhamDataset(data.Dataset):
         self.sample_rate = sample_rate
         self.normalize_audio = normalize_audio
         self.seg_len = None if segment is None else int(segment * sample_rate)
+        self.EPS = 1e-8
         if not nondefault_nsrc:
             self.n_src = self.task_dict["default_nsrc"]
         else:
@@ -144,7 +144,7 @@ class WhamDataset(data.Dataset):
         return len(self.mix)
 
     def __getitem__(self, idx):
-        """ Gets a mixture/sources pair.
+        """Gets a mixture/sources pair.
         Returns:
             mixture, vstack([source_arrays])
         """
@@ -174,12 +174,12 @@ class WhamDataset(data.Dataset):
 
         if self.normalize_audio:
             m_std = mixture.std(-1, keepdim=True)
-            mixture = normalize_tensor_wav(mixture, eps=EPS, std=m_std)
-            sources = normalize_tensor_wav(sources, eps=EPS, std=m_std)
+            mixture = normalize_tensor_wav(mixture, eps=self.EPS, std=m_std)
+            sources = normalize_tensor_wav(sources, eps=self.EPS, std=m_std)
         return mixture, sources
 
     def get_infos(self):
-        """ Get dataset infos (for publishing models).
+        """Get dataset infos (for publishing models).
 
         Returns:
             dict, dataset infos with keys `dataset`, `task` and `licences`.

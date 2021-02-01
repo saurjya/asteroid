@@ -10,12 +10,11 @@ from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 from asteroid.engine.system import System
 from asteroid.losses import PITLossWrapper, pairwise_mse
 from asteroid.losses import deep_clustering_loss
-from asteroid.filterbanks.transforms import take_mag, ebased_vad
+from asteroid_filterbanks.transforms import mag
+from asteroid.dsp.vad import ebased_vad
 
 from asteroid.data.wsj0_mix import make_dataloaders
 from model import make_model_and_optimizer
-
-EPS = 1e-8
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--exp_dir", default="exp/tmp", help="Full path to save best validation model")
@@ -51,29 +50,28 @@ def main(conf):
         config=conf,
     )
 
-    # Callbacks
+    # Define callbacks
+    callbacks = []
     checkpoint_dir = os.path.join(exp_dir, "checkpoints/")
     checkpoint = ModelCheckpoint(
         checkpoint_dir, monitor="val_loss", mode="min", save_top_k=5, verbose=True
     )
-    early_stopping = False
+    callbacks.append(checkpoint)
     if conf["training"]["early_stop"]:
-        early_stopping = EarlyStopping(monitor="val_loss", patience=30, verbose=True)
-    gpus = -1
+        callbacks.append(EarlyStopping(monitor="val_loss", mode="min", patience=30, verbose=True))
+
     # Don't ask GPU if they are not available.
-    if not torch.cuda.is_available():
-        print("No available GPU were found, set gpus to None")
-        gpus = None
+    gpus = -1 if torch.cuda.is_available() else None
+    distributed_backend = "ddp" if torch.cuda.is_available() else None
 
     # Train model
     trainer = pl.Trainer(
         max_epochs=conf["training"]["epochs"],
-        checkpoint_callback=checkpoint,
-        early_stop_callback=early_stopping,
+        callbacks=callbacks,
         default_root_dir=exp_dir,
         gpus=gpus,
-        distributed_backend="dp",
-        train_percent_check=1.0,  # Useful for fast experiment
+        distributed_backend=distributed_backend,
+        limit_train_batches=1.0,  # Useful for fast experiment
         gradient_clip_val=200,
     )
     trainer.fit(system)
@@ -93,7 +91,7 @@ class ChimeraSystem(System):
     def common_step(self, batch, batch_nb, train=False):
         inputs, targets, masks = self.unpack_data(batch)
         embeddings, est_masks = self(inputs)
-        spec = take_mag(self.model.encoder(inputs.unsqueeze(1)))
+        spec = mag(self.model.encoder(inputs.unsqueeze(1)))
         if self.mask_mixture:
             est_masks = est_masks * spec.unsqueeze(1)
             masks = masks * spec.unsqueeze(1)
@@ -130,10 +128,10 @@ class ChimeraSystem(System):
             "progress_bar": {"val_loss": avg_loss},
         }
 
-    def unpack_data(self, batch):
+    def unpack_data(self, batch, EPS=1e-8):
         mix, sources = batch
         # Compute magnitude spectrograms and IRM
-        src_mag_spec = take_mag(self.model.encoder(sources))
+        src_mag_spec = mag(self.model.encoder(sources))
         real_mask = src_mag_spec / (src_mag_spec.sum(1, keepdim=True) + EPS)
         # Get the src idx having the maximum energy
         binary_mask = real_mask.argmax(1)
@@ -141,7 +139,7 @@ class ChimeraSystem(System):
 
 
 class ChimeraLoss(nn.Module):
-    """ Combines Deep clustering loss and mask inference loss for ChimeraNet.
+    """Combines Deep clustering loss and mask inference loss for ChimeraNet.
 
     Args:
         alpha (float): loss weight. Total loss will be :

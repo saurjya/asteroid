@@ -1,10 +1,10 @@
-from ..filterbanks import make_enc_dec
+from asteroid_filterbanks import make_enc_dec
 from ..masknn import DPRNN
-from .base_models import BaseTasNet
+from .base_models import BaseEncoderMaskerDecoder
 
 
-class DPRNNTasNet(BaseTasNet):
-    """ DPRNN separation model, as described in [1].
+class DPRNNTasNet(BaseEncoderMaskerDecoder):
+    """DPRNN separation model, as described in [1].
 
     Args:
         n_src (int): Number of masks to estimate.
@@ -39,13 +39,14 @@ class DPRNNTasNet(BaseTasNet):
         kernel_size (int): Length of the filters.
         stride (int, optional): Stride of the convolution.
             If None (default), set to ``kernel_size // 2``.
+        sample_rate (float): Sampling rate of the model.
         **fb_kwargs (dict): Additional kwards to pass to the filterbank
             creation.
 
-    References:
-        [1] "Dual-path RNN: efficient long sequence modeling for
-            time-domain single-channel speech separation", Yi Luo, Zhuo Chen
-            and Takuya Yoshioka. https://arxiv.org/abs/1910.06379
+    References
+        - [1] "Dual-path RNN: efficient long sequence modeling for
+          time-domain single-channel speech separation", Yi Luo, Zhuo Chen
+          and Takuya Yoshioka. https://arxiv.org/abs/1910.06379
     """
 
     def __init__(
@@ -68,11 +69,17 @@ class DPRNNTasNet(BaseTasNet):
         kernel_size=16,
         n_filters=64,
         stride=8,
-        encoder_activation="relu",
+        encoder_activation=None,
+        sample_rate=8000,
         **fb_kwargs,
     ):
         encoder, decoder = make_enc_dec(
-            fb_name, kernel_size=kernel_size, n_filters=n_filters, stride=stride, **fb_kwargs
+            fb_name,
+            kernel_size=kernel_size,
+            n_filters=n_filters,
+            stride=stride,
+            sample_rate=sample_rate,
+            **fb_kwargs,
         )
         n_feats = encoder.n_feats_out
         if in_chan is not None:

@@ -55,3 +55,36 @@ def test_loader_submodule():
     # Apply our workaround torch_utils.load_state_dict_in and assert True.
     model_2 = torch_utils.load_state_dict_in(state_dict, model_2)
     assert torch_utils.are_models_equal(model, model_2)
+
+
+@pytest.mark.parametrize(
+    "data, expected",
+    (
+        (torch.tensor([1]), torch.tensor([1])),
+        (torch.tensor([1, 2]), torch.tensor([2])),
+        (torch.tensor([[1], [2]]), torch.tensor([2, 1])),
+        (torch.tensor([[2, 5, 5], [3, 8, -2]]), torch.tensor([2, 3])),
+    ),
+)
+def test_jitable_shape(data, expected):
+    output = torch_utils.jitable_shape(data)
+    assert torch.equal(output, expected)
+
+
+def test_get_device():
+    # We have only CPU in CI so can't test with real devices.
+
+    class FakeTensor:
+        device = "dev1"
+
+    class FakeModule:
+        def parameters(self):
+            yield FakeTensor()
+
+    class UnknownObject:
+        pass
+
+    assert torch_utils.get_device(FakeTensor()) == "dev1"
+    assert torch_utils.get_device(FakeModule()) == "dev1"
+    with pytest.raises(TypeError):
+        torch_utils.get_device(UnknownObject())

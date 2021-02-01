@@ -3,7 +3,7 @@ A recipe is a set of scripts that use Asteroid to build a
 source separation system.
 Each directory corresponds to a dataset and each subdirectory
 corresponds to a system build on this dataset.
-You can start by reading [this recipe](wham/ConvTasNet) to
+You can start by reading [this recipe](https://github.com/asteroid-team/asteroid/tree/master/egs/wham/ConvTasNet) to
 get familiar with them.
 
 ### How is it organized?
@@ -98,5 +98,5 @@ to help you.
 
 [kaldi]: https://github.com/kaldi-asr/kaldi
 [espnet]: https://github.com/espnet/espnet
-[issue]: https://github.com/mpariente/asteroid/issues/new
+[issue]: https://github.com/asteroid-team/asteroid/issues/new
 [slack]: https://join.slack.com/t/asteroid-dev/shared_invite/zt-cn9y85t3-QNHXKD1Et7qoyzu1Ji5bcA

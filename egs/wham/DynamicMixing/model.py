@@ -3,7 +3,7 @@ import os
 import torch
 from torch import nn
 
-import asteroid.filterbanks as fb
+import asteroid_filterbanks as fb
 from asteroid import torch_utils
 from asteroid.masknn import DPRNN
 from asteroid.engine.optimizers import make_optimizer
@@ -33,7 +33,7 @@ class Model(nn.Module):
 
 
 def make_model_and_optimizer(conf):
-    """ Function to define the model and optimizer for a config dictionary.
+    """Function to define the model and optimizer for a config dictionary.
     Args:
         conf: Dictionary containing the output of hierachical argparse.
     Returns:
@@ -51,7 +51,7 @@ def make_model_and_optimizer(conf):
 
 
 def load_best_model(train_conf, exp_dir):
-    """ Load best model after training.
+    """Load best model after training.
 
     Args:
         train_conf (dict): dictionary as expected by `make_model_and_optimizer`

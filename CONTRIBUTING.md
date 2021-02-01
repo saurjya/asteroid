@@ -15,7 +15,7 @@ To do that, install asteroid in develop mode either with pip
 
 To avoid formatting roundtrips in PRs, Asteroid relies on [`black`](https://github.com/psf/black)
 and [`pre-commit-hooks`](https://github.com/pre-commit/pre-commit-hooks) to handle formatting
-for us. You'll need to install `requirements.txt` and install git hooks with
+for us. You'll need to install `requirements/dev.txt` and install git hooks with
 `pre-commit install`.
 
 Here is a summary:
@@ -24,7 +24,7 @@ Here is a summary:
 ### Install
 git clone your_fork_url
 cd asteroid
-pip install -r requirements.txt
+pip install -r requirements/dev.txt
 pip install -e .
 pre-commit install  # To run black before commit
 
@@ -61,7 +61,7 @@ docstrings in the codebase for examples.
 
 ### Coding style
 
-We use [pre-commit hooks][../.pre-commit-config.yaml] to format the code using
+We use [pre-commit hooks](../.pre-commit-config.yaml) to format the code using
 `black`.
 The code is checked for `black`- and `flake8`- compliance on every commit with
 GitHub actions. Remember, continuous integration is not here to be all green,
@@ -71,8 +71,8 @@ be to help us see where to improve !
 If you have any question, [open an issue][issue] or [join the slack][slack],
 we'll be happy to help you.
 
-[asteroid]: https://github.com/mpariente/asteroid
-[issue]: https://github.com/mpariente/asteroid/issues/new
+[asteroid]: https://github.com/asteroid-team/asteroid
+[issue]: https://github.com/asteroid-team/asteroid/issues/new
 [slack]: https://join.slack.com/t/asteroid-dev/shared_invite/zt-cn9y85t3-QNHXKD1Et7qoyzu1Ji5bcA
 [pep8]: https://www.python.org/dev/peps/pep-0008/
 [docstrings]: https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html

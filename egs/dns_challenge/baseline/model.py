@@ -5,17 +5,17 @@ import torch
 from torch import nn
 
 from asteroid.engine.system import System
-from asteroid.filterbanks import make_enc_dec
-from asteroid.filterbanks.transforms import take_cat, take_mag
-from asteroid.filterbanks.transforms import apply_real_mask
-from asteroid.filterbanks.transforms import apply_mag_mask
-from asteroid.masknn import blocks
+from asteroid_filterbanks import make_enc_dec
+from asteroid_filterbanks.transforms import magreim, mag
+from asteroid_filterbanks.transforms import apply_real_mask
+from asteroid_filterbanks.transforms import apply_mag_mask
+from asteroid.masknn.recurrent import StackedResidualRNN
 from asteroid.engine.optimizers import make_optimizer
 from asteroid import torch_utils
 
 
 def make_model_and_optimizer(conf):
-    """ Function to define the model and optimizer for a config dictionary.
+    """Function to define the model and optimizer for a config dictionary.
     Args:
         conf: Dictionary containing the output of hierachical argparse.
     Returns:
@@ -42,7 +42,7 @@ def make_model_and_optimizer(conf):
 
 
 class Model(nn.Module):
-    """ Speech enhancement model.
+    """Speech enhancement model.
 
     Args:
         encoder (~.Encoder): instance of a complex filterbank encoder
@@ -75,9 +75,9 @@ class Model(nn.Module):
         tf_rep = self.encoder(x)
         # Estimate TF mask from STFT features : cat([re, im, mag])
         if self.is_complex:
-            to_masker = take_cat(tf_rep)
+            to_masker = magreim(tf_rep)
         else:
-            to_masker = take_mag(tf_rep)
+            to_masker = mag(tf_rep)
         # LSTM masker expects a feature dimension last (not like 1D conv)
         est_masks = self.masker(to_masker.transpose(1, 2)).transpose(1, 2)
         # Apply TF mask
@@ -94,7 +94,7 @@ class Model(nn.Module):
 
 
 class SimpleModel(nn.Module):
-    """ Simple recurrent model for the DNS challenge.
+    """Simple recurrent model for the DNS challenge.
 
     Args:
         input_size (int): input size along the features dimension
@@ -115,7 +115,7 @@ class SimpleModel(nn.Module):
         output_size = input_size if output_size is None else output_size
         self.output_size = output_size
         self.in_proj_layer = nn.Linear(input_size, hidden_size)
-        self.residual_rec = blocks.StackedResidualRNN(
+        self.residual_rec = StackedResidualRNN(
             rnn_type, hidden_size, n_layers=n_layers, dropout=dropout
         )
         self.out_proj_layer = nn.Linear(hidden_size, output_size)
@@ -140,7 +140,7 @@ class SimpleSystem(System):
 
 
 def distance(estimate, target, is_complex=True):
-    """ Compute the average distance in the complex plane. Makes more sense
+    """Compute the average distance in the complex plane. Makes more sense
     when the network computes a complex mask.
 
     Args:
@@ -155,14 +155,14 @@ def distance(estimate, target, is_complex=True):
     if is_complex:
         # Take the difference in the complex plane and compute the squared norm
         # of the remaining vector.
-        return take_mag(estimate - target).pow(2).mean()
+        return mag(estimate - target).pow(2).mean()
     else:
         # Compute the mean difference between magnitudes.
-        return (take_mag(estimate) - take_mag(target)).pow(2).mean()
+        return (mag(estimate) - mag(target)).pow(2).mean()
 
 
 def load_best_model(train_conf, exp_dir):
-    """ Load best model after training.
+    """Load best model after training.
 
     Args:
         train_conf (dict): dictionary as expected by `make_model_and_optimizer`

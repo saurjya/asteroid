@@ -3,7 +3,6 @@ import torch
 import subprocess
 from pprint import pprint
 
-from .zenodo import Zenodo
 
 PLEASE_PUBLISH = (
     "\nDon't forget to share your pretrained models at "
@@ -15,11 +14,11 @@ PLEASE_PUBLISH = (
 HREF = '<a href="{}">{}</a>'
 CC_SA = "Attribution-ShareAlike 3.0 Unported"
 CC_SA_LINK = "https://creativecommons.org/licenses/by-sa/3.0/"
-ASTEROID_REF = HREF.format("https://github.com/mpariente/asteroid", "Asteroid")
+ASTEROID_REF = HREF.format("https://github.com/asteroid-team/asteroid", "Asteroid")
 
 
 def save_publishable(publish_dir, model_dict, metrics=None, train_conf=None, recipe=None):
-    """ Save models to prepare for publication / model sharing.
+    """Save models to prepare for publication / model sharing.
 
     Args:
         publish_dir (str): Path to the publishing directory.
@@ -71,7 +70,7 @@ def upload_publishable(
     use_sandbox=False,
     unit_test=False,
 ):
-    """ Entry point to upload publishable model.
+    """Entry point to upload publishable model.
 
     Args:
         publish_dir (str): Path to the publishing directory.
@@ -103,7 +102,10 @@ def upload_publishable(
     publish_model_path = os.path.join(publish_dir, "published_model.pth")
     model = torch.load(model_path)
     model = _populate_publishable(
-        model, uploader=uploader, affiliation=affiliation, git_username=git_username,
+        model,
+        uploader=uploader,
+        affiliation=affiliation,
+        git_username=git_username,
     )
     torch.save(model, publish_model_path)
 
@@ -149,7 +151,7 @@ def upload_publishable(
 
 
 def _populate_publishable(model, uploader=None, affiliation=None, git_username=None):
-    """ Populate infos in publishable model.
+    """Populate infos in publishable model.
 
     Args:
         model (dict): Model to publish, with `infos` key, at least.
@@ -193,7 +195,7 @@ def get_username():
 
 
 def make_license_notice(model_name, licenses, uploader=None):
-    """ Make license notice based on license dicts.
+    """Make license notice based on license dicts.
 
     Args:
         model_name (str): Name of the model.
@@ -224,7 +226,7 @@ def make_license_notice(model_name, licenses, uploader=None):
 
 
 def zenodo_upload(model, token, model_path=None, use_sandbox=False):
-    """ Create deposit and upload metadata + model
+    """Create deposit and upload metadata + model
 
     Args:
         model (dict):
@@ -245,7 +247,8 @@ def zenodo_upload(model, token, model_path=None, use_sandbox=False):
         model_path_was_none = True
         model_path = "tmp.pth"
         torch.save(model, model_path)
-        # raise ValueError("Need path")
+
+    from .zenodo import Zenodo
 
     zen = Zenodo(token, use_sandbox=use_sandbox)
     metadata = make_metadata_from_model(model)
@@ -261,7 +264,8 @@ def zenodo_upload(model, token, model_path=None, use_sandbox=False):
 
 
 def make_metadata_from_model(model):
-    """ Create Zenodo deposit metadata for a given publishable model.
+    """Create Zenodo deposit metadata for a given publishable model.
+
     Args:
         model (dict): Dictionary with all infos needed to publish.
             More info to come.
@@ -269,7 +273,7 @@ def make_metadata_from_model(model):
     Returns:
         dict, the metadata to create the Zenodo deposit with.
 
-    .. note::We remove the PESQ from the final results as a license is needed to
+    .. note:: We remove the PESQ from the final results as a license is needed to
         use it.
     """
     infos = model["infos"]
@@ -290,6 +294,11 @@ def make_metadata_from_model(model):
     description += "<p><strong>Results:</strong></p>"
     display_result = {k: v for k, v in infos["final_metrics"].items() if "pesq" not in k.lower()}
     description += display_one_level_dict(display_result)
+
+    # Software section
+    description += "<p>&nbsp;</p>"
+    description += "<p><strong>Versions:</strong></p>"
+    description += display_one_level_dict(infos["software_versions"])
 
     # License section
     description += "<p>&nbsp;</p>"
@@ -317,7 +326,8 @@ def make_metadata_from_model(model):
 
 
 def two_level_dict_html(dic):
-    """ Two-level dict to HTML.
+    """Two-level dict to HTML.
+
     Args:
         dic (dict): two-level dict
 
@@ -338,7 +348,8 @@ def two_level_dict_html(dic):
 
 
 def display_one_level_dict(dic):
-    """ Single level dict to HTML
+    """Single level dict to HTML
+
     Args:
         dic (dict):
 

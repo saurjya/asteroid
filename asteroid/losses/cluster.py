@@ -2,15 +2,15 @@ import torch
 
 
 def deep_clustering_loss(embedding, tgt_index, binary_mask=None):
-    """ Compute the deep clustering loss defined in [1].
+    r"""Compute the deep clustering loss defined in [1].
 
     Args:
         embedding (torch.Tensor): Estimated embeddings.
-            Expected shape  (batch, frequency x frame, embedding_dim)
+            Expected shape  :math:`(batch, frequency * frame, embedding\_dim)`.
         tgt_index (torch.Tensor): Dominating source index in each TF bin.
-            Expected shape: [batch, frequency, frame]
+            Expected shape: :math:`(batch, frequency, frame)`.
         binary_mask (torch.Tensor): VAD in TF plane. Bool or Float.
-            See asteroid.filterbanks.transforms.ebased_vad.
+            See asteroid.dsp.vad.ebased_vad.
 
     Returns:
          `torch.Tensor`. Deep clustering loss for every batch sample.
@@ -25,12 +25,13 @@ def deep_clustering_loss(embedding, tgt_index, binary_mask=None):
 
     Reference
         [1] Zhong-Qiu Wang, Jonathan Le Roux, John R. Hershey
-            "ALTERNATIVE OBJECTIVE FUNCTIONS FOR DEEP CLUSTERING"
+        "ALTERNATIVE OBJECTIVE FUNCTIONS FOR DEEP CLUSTERING"
 
-    .. note:: Be careful in viewing the embedding tensors. The target indices
-        `tgt_index` are of shape (batch, freq, frames). Even if the embedding
-        is of shape (batch, freq*frames, emb), the underlying view should be
-        (batch, freq, frames, emb) and not (batch, frames, freq, emb).
+    .. note::
+        Be careful in viewing the embedding tensors. The target indices
+        ``tgt_index`` are of shape :math:`(batch, freq, frames)`. Even if the embedding
+        is of shape :math:`(batch, freq * frames, emb)`, the underlying view should be
+        :math:`(batch, freq, frames, emb)` and not :math:`(batch, frames, freq, emb)`.
     """
     spk_cnt = len(tgt_index.unique())
 
@@ -61,7 +62,7 @@ def deep_clustering_loss(embedding, tgt_index, binary_mask=None):
 
 
 def batch_matrix_norm(matrix, norm_order=2):
-    """ Normalize a matrix according to `norm_order`
+    """Normalize a matrix according to `norm_order`
 
     Args:
         matrix (torch.Tensor): Expected shape [batch, *]
