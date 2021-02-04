@@ -5,7 +5,7 @@ filterbank:
   stride: 10
 # Network config
 masknet:
-  n_blocks: 10
+  n_blocks: 9
   n_repeats: 3
   mask_act: relu
   bn_chan: 128

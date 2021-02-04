@@ -71,13 +71,13 @@ def main(conf):
     conf["masknet"].update({"n_src": conf["data"]["n_inst"] * conf["data"]["n_poly"]})
 
     # Define model and optimizer
-    model = ConvTasNet(**conf["filterbank"], **conf["masknet"])
+    model = ConvTasNet(**conf["filterbank"], **conf["masknet"], sample_rate=conf["data"]["sample_rate"])
     optimizer = make_optimizer(model.parameters(), **conf["optim"])
     # Define scheduler
     scheduler = None
     if conf["training"]["half_lr"]:
-        scheduler = ReduceLROnPlateau(optimizer=optimizer, factor=0.5, patience=2)
-        monitor = "val_loss"
+        scheduler = ReduceLROnPlateau(optimizer=optimizer, factor=0.5, patience=3)
+        #monitor = "val_loss"
     # Just after instantiating, save the args. Easy loading in the future.
     exp_dir = conf["main_args"]["exp_dir"]
     os.makedirs(exp_dir, exist_ok=True)
@@ -118,7 +118,7 @@ def main(conf):
     )
     callbacks.append(checkpoint)
     if conf["training"]["early_stop"]:
-        callbacks.append(EarlyStopping(monitor="val_loss", mode="min", patience=30, verbose=True))
+        callbacks.append(EarlyStopping(monitor="val_loss", mode="min", patience=15, verbose=True))
 
     #gpus = -1
     # Don't ask GPU if they are not available.
@@ -128,7 +128,7 @@ def main(conf):
         callbacks=callbacks,
         default_root_dir=exp_dir,
         gpus=gpus,
-        distributed_backend="ddp",
+        distributed_backend="dp",
         limit_train_batches=1.0,  # Useful for fast experiment
         gradient_clip_val=5.0,
     )
