@@ -97,6 +97,7 @@ def preprocess_metadata(
                 if "yes" in trim["has_bleed"]:
                     print(meta_path, " has bleed")
                     continue
+                match_files = []
                 for stem in trim["stems"]:
                     for instrument in inst_list:
                         if is_stem:
@@ -111,7 +112,7 @@ def preprocess_metadata(
                                     counter,
                                     trim["stems"][stem]["instrument"],
                                 )
-                                inst_tracks.append(
+                                match_files.append(
                                     os.path.join(
                                         data_path[ver],
                                         meta_file,
@@ -133,7 +134,7 @@ def preprocess_metadata(
                                         counter,
                                         trim["stems"][stem]["instrument"],
                                     )
-                                    inst_tracks.append(
+                                    match_files.append(
                                         os.path.join(
                                             data_path[ver],
                                             meta_file,

@@ -38,7 +38,7 @@ python_path=python
 
 # General
 stage=3  # Controls from which stage to start
-tag="5sec_lr0005_8b_best"  # Controls the directory name associated to the experiment
+tag="5sec_lr001_8b_increased"  # Controls the directory name associated to the experiment
 # You can ask for several GPUs using id (passed to CUDA_VISIBLE_DEVICES)
 id=$CUDA_VISIBLE_DEVICES
 echo $CUDA_VISIBLE_DEVICES
@@ -49,10 +49,10 @@ n_inst=1  # 2 or 3
 n_poly=4
 segment=5.0
 # Training
-batch_size=2
+batch_size=1
 num_workers=10
 optimizer=rmsprop
-lr=0.0005
+lr=0.001
 weight_decay=0.0
 epochs=200
 loss_alpha=1.0  # DC loss weight : 1.0 => DC, <1.0 => Chimera
