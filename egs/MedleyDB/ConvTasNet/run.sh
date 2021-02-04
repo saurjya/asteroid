@@ -3,7 +3,7 @@ set -e  # Exit on error
 
 #if starting from stage 0
 # Destination to save json files with list of track locations for instrument sets
-json_dir=/jmain01/home/JAD007/txk02/sxs01-txk02/data
+json_dir=/jmain01/home/JAD029/txl22/sxs01-txl22/data
 # Location for tracklist for all data dirs
 tracklist=  # Directory containing tracklists for V1, V2, Bach10 and others
 
@@ -20,10 +20,10 @@ Bach10_dir=  # Directory containing MedleyDB format Bach10 audio files
 extra_dir= # Directory containing additional MedleyDB format audio files
 
 # Location for MedleyDB format metadata files for all multitracks
-metadata_dir=/jmain01/home/JAD007/txk02/sxs01-txk02/metadata/medleydb # Directory containing MedleyDB github repository with metadata for all files
+metadata_dir=/jmain01/home/JAD029/txl22/sxs01-txl22/metadata/medleydb # Directory containing MedleyDB github repository with metadata for all files
 
 # Location for evaluation multitrack sourceFolders
-wav_dir=/jmain01/home/JAD007/txk02/sxs01-txk02/data/split_5/tt/ # Directory containing MedleyDB github repository with metadata for all files
+wav_dir=/jmain01/home/JAD029/txl22/sxs01-txl22/data/fix/split_5/tt/ # Directory containing MedleyDB github repository with metadata for all files
 
 
 
@@ -38,7 +38,7 @@ python_path=python
 
 # General
 stage=3  # Controls from which stage to start
-tag="5sec_lr0005_8b_rand50"  # Controls the directory name associated to the experiment
+tag="5sec_lr0005_8b_best"  # Controls the directory name associated to the experiment
 # You can ask for several GPUs using id (passed to CUDA_VISIBLE_DEVICES)
 id=$CUDA_VISIBLE_DEVICES
 echo $CUDA_VISIBLE_DEVICES

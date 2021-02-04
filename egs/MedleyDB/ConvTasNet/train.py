@@ -18,8 +18,8 @@ from asteroid.models import ConvTasNet
 parser = argparse.ArgumentParser()
 parser.add_argument("--exp_dir", default="exp/tmp", help="Full path to save best validation model")
 #test_dir = "/data/EECS-Sandler-Lab/AcapellaDataset/split/tt/"
-train_dir = "/jmain01/home/JAD007/txk02/sxs01-txk02/data/split_5/tr/"
-val_dir = "/jmain01/home/JAD007/txk02/sxs01-txk02/data/split_5/cv/"
+train_dir = "/jmain01/home/JAD029/txl22/sxs01-txl22/data/fix/split_5/tr/"
+val_dir = "/jmain01/home/JAD029/txl22/sxs01-txl22/data/fix/split_5/cv/"
 
 def main(conf):
     exp_dir = conf["main_args"]["exp_dir"]
@@ -76,7 +76,7 @@ def main(conf):
     # Define scheduler
     scheduler = None
     if conf["training"]["half_lr"]:
-        scheduler = ReduceLROnPlateau(optimizer=optimizer, factor=0.5, patience=5)
+        scheduler = ReduceLROnPlateau(optimizer=optimizer, factor=0.5, patience=2)
         monitor = "val_loss"
     # Just after instantiating, save the args. Easy loading in the future.
     exp_dir = conf["main_args"]["exp_dir"]

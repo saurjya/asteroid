@@ -147,7 +147,7 @@ class MedleydbDataset(data.Dataset):
 class SourceFolderDataset(data.Dataset):
     dataset_name = "SourceFolder"
 
-    def __init__(self, json_dir, wav_dir, n_src=1, sample_rate=44100, batch_size=1, train=True):
+    def __init__(self, json_dir, wav_dir, n_src=1, sample_rate=44100, batch_size=1, train=False):
         super(SourceFolderDataset, self).__init__()
         # Task setting
         self.json_dir = json_dir
@@ -177,11 +177,11 @@ class SourceFolderDataset(data.Dataset):
             with open(src_json, "r") as f:
                 temp = json.load(f)
                 if train:
-                    split = len(temp)/2
-                    temp1 = temp[:split]
-                    temp2 = temp[split:]
-                    random.shuffle(temp2)
-                sources_infos.append(temp1+temp2)
+                    #split = int(len(temp)/4)
+                    #temp1 = temp[:-split]
+                    #random.shuffle(temp1)
+                    #temp[:-split] = temp1
+                sources_infos.append(temp)
         
         #sources_infos = [shuffle(x) for x in sources_infos]
         sources_infos = np.array(sources_infos)
