@@ -18,8 +18,8 @@ from asteroid.models import ConvTasNet
 parser = argparse.ArgumentParser()
 parser.add_argument("--exp_dir", default="exp/tmp", help="Full path to save best validation model")
 #test_dir = "/data/EECS-Sandler-Lab/AcapellaDataset/split/tt/"
-train_dir = "/jmain01/home/JAD029/txl22/sxs01-txl22/data/fix/split_5/tr/"
-val_dir = "/jmain01/home/JAD029/txl22/sxs01-txl22/data/fix/split_5/cv/"
+train_dir = "/jmain01/home/JAD007/txk02/sxs01-txk02/data/fix/split_5/tr/"
+val_dir = "/jmain01/home/JAD007/txk02/sxs01-txk02/data/fix/split_5/cv/"
 
 def main(conf):
     exp_dir = conf["main_args"]["exp_dir"]
@@ -118,7 +118,7 @@ def main(conf):
     )
     callbacks.append(checkpoint)
     if conf["training"]["early_stop"]:
-        callbacks.append(EarlyStopping(monitor="val_loss", mode="min", patience=15, verbose=True))
+        callbacks.append(EarlyStopping(monitor="val_loss", mode="min", patience=30, verbose=True))
 
     #gpus = -1
     # Don't ask GPU if they are not available.
@@ -128,7 +128,7 @@ def main(conf):
         callbacks=callbacks,
         default_root_dir=exp_dir,
         gpus=gpus,
-        distributed_backend="dp",
+        distributed_backend="ddp",
         limit_train_batches=1.0,  # Useful for fast experiment
         gradient_clip_val=5.0,
     )

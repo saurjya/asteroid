@@ -183,10 +183,7 @@ class SourceFolderDataset(data.Dataset):
                     #temp[:-split] = temp1
                 sources_infos.append(temp)
         
-        #sources_infos = [shuffle(x) for x in sources_infos]
         sources_infos = np.array(sources_infos)
-        #sources_infos = [shuffle(x) for x in sources_infos]
-        #sources_infos = np.swapaxes(sources_infos, 0,1)    
         self.mix = mix_infos
         self.sources = sources_infos
 
