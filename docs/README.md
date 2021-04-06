@@ -1,18 +1,16 @@
 The docs built from master can be viewed [here](https://asteroid-team.github.io/asteroid/).
-We need to work on it so, any contribution are welcome.
-Our (future) template can be found
-[here](https://github.com/asteroid-team/asteroid_sphinx_theme).
+Our template can be found [here](https://github.com/asteroid-team/asteroid_sphinx_theme).
 
 ## Building the docs
 To build the docs, you'll need [Sphinx](https://www.sphinx-doc.org/en/master/),
 a theme and some other package
 ```bash
 # Start by installing the required packages
-cd docs/
-pip install -r requirements.txt
+pip install -r requirements/docs.txt
 ```
 Then, you can build the docs and view it
 ```bash
+cd docs/
 # Build the docs
 make html
 # View it! (Change firefox by your favorite browser)
