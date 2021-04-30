@@ -176,7 +176,7 @@ class SourceFolderDataset(data.Dataset):
         for src_json in sources_json:
             with open(src_json, "r") as f:
                 temp = json.load(f)
-                if train:
+                #if train:
                     #split = int(len(temp)/4)
                     #temp1 = temp[:-split]
                     #random.shuffle(temp1)
