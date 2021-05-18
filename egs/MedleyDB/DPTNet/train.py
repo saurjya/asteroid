@@ -16,6 +16,7 @@ from asteroid.data.medleydb_dataset import SourceFolderDataset
 from asteroid.engine.optimizers import make_optimizer
 from asteroid.engine.system import System
 from asteroid.losses import PITLossWrapper, pairwise_neg_sisdr
+from torch_audiomentations import Compose, Gain
 
 # Keys which are not in the conf.yml file can be added here.
 # In the hierarchical dictionary created when parsing, the key `key` can be
@@ -26,9 +27,26 @@ from asteroid.losses import PITLossWrapper, pairwise_neg_sisdr
 parser = argparse.ArgumentParser()
 parser.add_argument("--exp_dir", default="exp/tmp", help="Full path to save best validation model")
 #test_dir = "/data/EECS-Sandler-Lab/AcapellaDataset/split/tt/"
-train_dir = "/jmain01/home/JAD007/txk02/sxs01-txk02/data/fix/split_5/tr/"
-val_dir = "/jmain01/home/JAD007/txk02/sxs01-txk02/data/fix/split_5/cv/"
+train_dir = "/jmain02/home/J2AD002/jxm06/sxs01-jxm06/data/split_5/tr/"
+val_dir = "/jmain02/home/J2AD002/jxm06/sxs01-jxm06/data/split_5/cv/"
 
+class AugSystem(System):
+    def training_step(self, batch, batch_nb):
+        mix, source = batch
+        apply_augmentation = Compose(
+            transforms=[
+                Gain(
+                    min_gain_in_db=-15.0,
+                    max_gain_in_db=5.0,
+                    p=0.5,
+                    mode="per_channel"
+                )
+            ]
+        )
+        source = apply_augmentation(source, sample_rate=22050)
+        loss = self.common_step((mix, source), batch_nb, train=True)
+        self.log("loss", loss, logger=True)
+        return loss    
 
 def main(conf):
     exp_dir = conf["main_args"]["exp_dir"]
@@ -48,6 +66,7 @@ def main(conf):
         conf["data"]["n_poly"],
         conf["data"]["sample_rate"],
         conf["training"]["batch_size"],
+        train = True
     )
     val_set = SourceFolderDataset(
         val_dir,
@@ -63,7 +82,7 @@ def main(conf):
         shuffle=False,
         batch_size=conf["training"]["batch_size"],
         num_workers=conf["training"]["num_workers"],
-        drop_last=True,
+        drop_last=True
     )
     val_loader = data.DataLoader(
         val_set,
@@ -95,7 +114,7 @@ def main(conf):
 
     # Define Loss function.
     loss_func = PITLossWrapper(pairwise_neg_sisdr, pit_from="pw_mtx")
-    system = System(
+    system = AugSystem(
         model=model,
         loss_func=loss_func,
         optimizer=optimizer,

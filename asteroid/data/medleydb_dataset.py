@@ -156,6 +156,8 @@ class SourceFolderDataset(data.Dataset):
         self.n_src = n_src
         self.like_test = True
         self.batch_size = batch_size
+        self.train = train
+        
         sources_infos = []
         # Make and load json files
         speaker_list = ["mix"] + [f"s{n+1}" for n in range(n_src)]
